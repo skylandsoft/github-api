@@ -44,7 +44,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: ${{ matrix.java }}
+          java-version: 11
           distribution: 'adopt'
       - name: Publish package
         run: mvn --batch-mode deploy
