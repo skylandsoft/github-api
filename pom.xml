@@ -8,26 +8,21 @@
   <description>GitHub API for Java</description>
 
   <scm>
-    <connection>scm:git:git@github.com/hub4j/${project.artifactId}.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/hub4j/${project.artifactId}.git</developerConnection>
-    <url>https://github.com/hub4j/github-api/</url>
+    <connection>scm:git:git@github.com/skylandsoft/${project.artifactId}.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/skylandsoft/${project.artifactId}.git</developerConnection>
+    <url>https://github.com/skylandsoft/github-api/</url>
     <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    </snapshotRepository>
     <repository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/skylandsoft/github-api</url>
     </repository>
     <site>
       <id>github-pages</id>
-      <url>gitsite:git@github.com/hub4j/${project.artifactId}.git</url>
+      <url>gitsite:git@github.com/skylandsoft/${project.artifactId}.git</url>
     </site>
   </distributionManagement>
 

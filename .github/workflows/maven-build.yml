@@ -88,3 +88,19 @@ jobs:
       env:
         MAVEN_OPTS: ${{ env.JAVA_11_PLUS_MAVEN_OPTS }}
       run: mvn -B clean install -D enable-ci --file pom.xml "-Dsurefire.argLine=--add-opens java.base/java.net=ALL-UNNAMED"
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
