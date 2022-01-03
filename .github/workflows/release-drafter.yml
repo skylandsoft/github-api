@@ -8,7 +8,7 @@ on:
 
 jobs:
   update_release_draft:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Release Drafter
         uses: release-drafter/release-drafter@v5
