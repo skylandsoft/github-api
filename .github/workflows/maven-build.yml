@@ -13,7 +13,7 @@ env:
 jobs:
   build:
     name: build-only (Java ${{ matrix.java }})
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -31,7 +31,7 @@ jobs:
           MAVEN_OPTS: ${{ env.JAVA_11_PLUS_MAVEN_OPTS }}
         run: mvn -B clean install -DskipTests --file pom.xml
   publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
