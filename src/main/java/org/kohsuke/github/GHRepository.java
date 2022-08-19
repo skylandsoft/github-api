@@ -24,7 +24,6 @@
 package org.kohsuke.github;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -95,7 +94,7 @@ public class GHRepository extends GHObject {
 
     private GHUser owner; // not fully populated. beware.
 
-    private boolean has_issues, has_wiki, fork, has_downloads, has_pages, archived, has_projects;
+    private boolean has_issues, has_wiki, fork, has_downloads, has_pages, archived, disabled, has_projects;
 
     private boolean allow_squash_merge;
 
@@ -114,11 +113,11 @@ public class GHRepository extends GHObject {
 
     private String pushed_at;
 
-    private Map<Integer, GHMilestone> milestones = new WeakHashMap<Integer, GHMilestone>();
+    private Map<Integer, GHMilestone> milestones = Collections.synchronizedMap(new WeakHashMap<>());
 
     private String default_branch, language;
 
-    private Map<String, GHCommit> commits = new WeakHashMap<String, GHCommit>();
+    private Map<String, GHCommit> commits = Collections.synchronizedMap(new WeakHashMap<>());
 
     @SkipFromToString
     private GHRepoPermission permissions;
@@ -662,6 +661,15 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Is disabled boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    /**
      * Is allow squash merge boolean.
      *
      * @return the boolean
@@ -1015,6 +1023,21 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Checks if the given user is a collaborator for this repository.
+     *
+     * @param user
+     *            a {@link GHUser}
+     * @return true if the user is a collaborator for this repository
+     * @throws IOException
+     *             the io exception
+     */
+    public boolean isCollaborator(GHUser user) throws IOException {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("collaborators/" + user.getLogin()))
+                .fetchHttpStatusCode() == 204;
+    }
+
+    /**
      * Obtain permission for a given user in this repository.
      *
      * @param user
@@ -1044,6 +1067,36 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Check if a user has at least the given permission in this repository.
+     *
+     * @param user
+     *            a {@link GHUser#getLogin}
+     * @param permission
+     *            the permission to check
+     * @return true if the user has at least this permission level
+     * @throws IOException
+     *             the io exception
+     */
+    public boolean hasPermission(String user, GHPermissionType permission) throws IOException {
+        return getPermission(user).implies(permission);
+    }
+
+    /**
+     * Check if a user has at least the given permission in this repository.
+     *
+     * @param user
+     *            the user
+     * @param permission
+     *            the permission to check
+     * @return true if the user has at least this permission level
+     * @throws IOException
+     *             the io exception
+     */
+    public boolean hasPermission(GHUser user, GHPermissionType permission) throws IOException {
+        return hasPermission(user.getLogin(), permission);
+    }
+
+    /**
      * If this repository belongs to an organization, return a set of teams.
      *
      * @return the teams
@@ -1061,14 +1114,31 @@ public class GHRepository extends GHObject {
     /**
      * Add collaborators.
      *
-     * @param users
-     *            the users
      * @param permission
      *            the permission level
+     * @param users
+     *            the users
+     * @throws IOException
+     *             the io exception
+     * @deprecated #addCollaborators(GHOrganization.RolePermission, GHUser)
+     */
+    @Deprecated
+    public void addCollaborators(GHOrganization.Permission permission, GHUser... users) throws IOException {
+        addCollaborators(asList(users), permission);
+    }
+
+    /**
+     * Add collaborators.
+     *
+     * @param permission
+     *            the permission level
+     * @param users
+     *            the users
+     *
      * @throws IOException
      *             the io exception
      */
-    public void addCollaborators(GHOrganization.Permission permission, GHUser... users) throws IOException {
+    public void addCollaborators(GHOrganization.RepositoryRole permission, GHUser... users) throws IOException {
         addCollaborators(asList(users), permission);
     }
 
@@ -1105,8 +1175,25 @@ public class GHRepository extends GHObject {
      *            the permission level
      * @throws IOException
      *             the io exception
+     * @deprecated #addCollaborators(Collection, GHOrganization.RolePermission)
      */
+    @Deprecated
     public void addCollaborators(Collection<GHUser> users, GHOrganization.Permission permission) throws IOException {
+        modifyCollaborators(users, "PUT", GHOrganization.RepositoryRole.from(permission));
+    }
+
+    /**
+     * Add collaborators.
+     *
+     * @param users
+     *            the users
+     * @param permission
+     *            the permission level
+     * @throws IOException
+     *             the io exception
+     */
+    public void addCollaborators(Collection<GHUser> users, GHOrganization.RepositoryRole permission)
+            throws IOException {
         modifyCollaborators(users, "PUT", permission);
     }
 
@@ -1136,14 +1223,14 @@ public class GHRepository extends GHObject {
 
     private void modifyCollaborators(@NonNull Collection<GHUser> users,
             @NonNull String method,
-            @CheckForNull GHOrganization.Permission permission) throws IOException {
+            @CheckForNull GHOrganization.RepositoryRole permission) throws IOException {
         Requester requester = root().createRequest().method(method);
         if (permission != null) {
-            requester = requester.with("permission", permission).inBody();
+            requester = requester.with("permission", permission.toString()).inBody();
         }
 
         // Make sure that the users collection doesn't have any duplicates
-        for (GHUser user : new LinkedHashSet<GHUser>(users)) {
+        for (GHUser user : new LinkedHashSet<>(users)) {
             requester.withUrlPath(getApiTailUrl("collaborators/" + user.getLogin())).send();
         }
     }
@@ -1157,7 +1244,7 @@ public class GHRepository extends GHObject {
      *             the io exception
      */
     public void setEmailServiceHook(String address) throws IOException {
-        Map<String, String> config = new HashMap<String, String>();
+        Map<String, String> config = new HashMap<>();
         config.put("address", address);
         root().createRequest()
                 .method("POST")
@@ -3036,7 +3123,7 @@ public class GHRepository extends GHObject {
         if (tail.length() > 0 && !tail.startsWith("/")) {
             tail = '/' + tail;
         }
-        return "/repos/" + getOwnerName() + "/" + name + tail;
+        return "/repos/" + full_name + tail;
     }
 
     /**
@@ -3170,6 +3257,20 @@ public class GHRepository extends GHObject {
                 .wrapUp(this);
     }
 
+    /**
+     * Gets the public key for the given repo
+     *
+     * @return the public key
+     * @throws IOException
+     *             the io exception
+     */
+    public GHRepositoryPublicKey getPublicKey() throws IOException {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("/actions/secrets/public-key"))
+                .fetch(GHRepositoryPublicKey.class)
+                .wrapUp(this);
+    }
+
     // Only used within listTopics().
     private static class Topics {
         public List<String> names;
@@ -3209,6 +3310,27 @@ public class GHRepository extends GHObject {
                 .send();
     }
 
+    /**
+     * Set/Update a repository secret
+     * "https://docs.github.com/rest/reference/actions#create-or-update-a-repository-secret"
+     *
+     * @param secretName
+     *            the name of the secret
+     * @param encryptedValue
+     *            The encrypted value for this secret
+     * @param publicKeyId
+     *            The id of the Public Key used to encrypt this secret
+     * @throws IOException
+     *             the io exception
+     */
+    public void createSecret(String secretName, String encryptedValue, String publicKeyId) throws IOException {
+        root().createRequest()
+                .method("PUT")
+                .with("encrypted_value", encryptedValue)
+                .with("key_id", publicKeyId)
+                .withUrlPath(getApiTailUrl("actions/secrets") + "/" + secretName)
+                .send();
+    }
     /**
      * Create a tag. See https://developer.github.com/v3/git/tags/#create-a-tag-object
      *
@@ -3315,29 +3437,13 @@ public class GHRepository extends GHObject {
             return; // can't populate if the root is offline
         }
 
-        final URL url = requireNonNull(getUrl(), "Missing instance URL!");
+        // We don't use the URL provided in the JSON because it is not reliable:
+        // 1. There is bug in Push event payloads that returns the wrong url.
+        // For Push event repository records, they take the form "https://github.com/{fullName}".
+        // All other occurrences of "url" take the form "https://api.github.com/...".
+        // 2. For Installation event payloads, the URL is not provided at all.
 
-        try {
-            // IMPORTANT: the url for repository records does not reliably point to the API url.
-            // There is bug in Push event payloads that returns the wrong url.
-            // All other occurrences of "url" take the form "https://api.github.com/...".
-            // For Push event repository records, they take the form "https://github.com/{fullName}".
-            root().createRequest()
-                    .withPreview(BAPTISTE)
-                    .withPreview(NEBULA)
-                    .setRawUrlPath(url.toString())
-                    .fetchInto(this);
-        } catch (HttpException e) {
-            if (e.getCause() instanceof JsonParseException) {
-                root().createRequest()
-                        .withPreview(BAPTISTE)
-                        .withPreview(NEBULA)
-                        .withUrlPath("/repos/" + full_name)
-                        .fetchInto(this);
-            } else {
-                throw e;
-            }
-        }
+        root().createRequest().withPreview(BAPTISTE).withPreview(NEBULA).withUrlPath(getApiTailUrl("")).fetchInto(this);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.kohsuke.github.GHCheckRun.Conclusion;
+import org.kohsuke.github.GHOrganization.RepositoryRole;
 import org.kohsuke.github.GHRepository.Visibility;
 
 import java.io.ByteArrayInputStream;
@@ -90,6 +91,20 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
 
         assertThat(repo.isArchived(), is(true));
         assertThat(getRepository().isArchived(), is(true));
+    }
+
+    @Test
+    public void isDisabled() throws Exception {
+        GHRepository r = getRepository();
+
+        assertThat(r.isDisabled(), is(false));
+    }
+
+    @Test
+    public void isDisabledTrue() throws Exception {
+        GHRepository r = getRepository();
+
+        assertThat(r.isDisabled(), is(true));
     }
 
     @Test
@@ -325,6 +340,35 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
     }
 
     @Test
+    public void hasPermission() throws Exception {
+        kohsuke();
+        GHRepository publicRepository = gitHub.getRepository("hub4j-test-org/test-permission");
+        assertThat(publicRepository.hasPermission("kohsuke", GHPermissionType.ADMIN), equalTo(true));
+        assertThat(publicRepository.hasPermission("kohsuke", GHPermissionType.WRITE), equalTo(true));
+        assertThat(publicRepository.hasPermission("kohsuke", GHPermissionType.READ), equalTo(true));
+        assertThat(publicRepository.hasPermission("kohsuke", GHPermissionType.NONE), equalTo(false));
+
+        assertThat(publicRepository.hasPermission("dude", GHPermissionType.ADMIN), equalTo(false));
+        assertThat(publicRepository.hasPermission("dude", GHPermissionType.WRITE), equalTo(false));
+        assertThat(publicRepository.hasPermission("dude", GHPermissionType.READ), equalTo(true));
+        assertThat(publicRepository.hasPermission("dude", GHPermissionType.NONE), equalTo(false));
+
+        // also check the GHUser method
+        GHUser kohsuke = gitHub.getUser("kohsuke");
+        assertThat(publicRepository.hasPermission(kohsuke, GHPermissionType.ADMIN), equalTo(true));
+        assertThat(publicRepository.hasPermission(kohsuke, GHPermissionType.WRITE), equalTo(true));
+        assertThat(publicRepository.hasPermission(kohsuke, GHPermissionType.READ), equalTo(true));
+        assertThat(publicRepository.hasPermission(kohsuke, GHPermissionType.NONE), equalTo(false));
+
+        // check NONE on a private project
+        GHRepository privateRepository = gitHub.getRepository("hub4j-test-org/test-permission-private");
+        assertThat(privateRepository.hasPermission("dude", GHPermissionType.ADMIN), equalTo(false));
+        assertThat(privateRepository.hasPermission("dude", GHPermissionType.WRITE), equalTo(false));
+        assertThat(privateRepository.hasPermission("dude", GHPermissionType.READ), equalTo(false));
+        assertThat(privateRepository.hasPermission("dude", GHPermissionType.NONE), equalTo(true));
+    }
+
+    @Test
     public void LatestRepositoryExist() {
         try {
             // add the repository that have latest release
@@ -340,15 +384,28 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
     public void addCollaborators() throws Exception {
         GHRepository repo = getRepository();
         GHUser user = getUser();
-        List<GHUser> users = new ArrayList<GHUser>();
+        List<GHUser> users = new ArrayList<>();
 
         users.add(user);
         users.add(gitHub.getUser("jimmysombrero2"));
         repo.addCollaborators(users, GHOrganization.Permission.PUSH);
 
         GHPersonSet<GHUser> collabs = repo.getCollaborators();
-
         GHUser colabUser = collabs.byLogin("jimmysombrero");
+
+        assertThat(user.getName(), equalTo(colabUser.getName()));
+    }
+
+    @Test
+    public void addCollaboratorsRepoPerm() throws Exception {
+        GHRepository repo = getRepository();
+        GHUser user = getUser();
+
+        RepositoryRole role = RepositoryRole.from(GHOrganization.Permission.PULL);
+        repo.addCollaborators(role, user);
+
+        GHPersonSet<GHUser> collabs = repo.getCollaborators();
+        GHUser colabUser = collabs.byLogin("jgangemi");
 
         assertThat(user.getName(), equalTo(colabUser.getName()));
     }
@@ -550,6 +607,14 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
         assertThat(r.getTotalCount(), greaterThan(0));
     }
 
+    @Test
+    public void searchOrgForRepositories() throws Exception {
+        PagedSearchIterable<GHRepository> r = gitHub.searchRepositories().org("hub4j-test-org").list();
+        GHRepository u = r.iterator().next();
+        assertThat(u.getOwnerName(), equalTo("hub4j-test-org"));
+        assertThat(r.getTotalCount(), greaterThan(0));
+    }
+
     @Test // issue #162
     public void testIssue162() throws Exception {
         GHRepository r = gitHub.getRepository("hub4j/github-api");
@@ -686,6 +751,15 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
         assertThat(refs, notNullValue());
         assertThat(refs.length, equalTo(1));
         assertThat(refs[0].getRef(), equalTo("refs/heads/main"));
+    }
+
+    @Test
+    public void getPublicKey() throws Exception {
+        GHRepository repo = getTempRepository();
+        GHRepositoryPublicKey publicKey = repo.getPublicKey();
+        assertThat(publicKey, notNullValue());
+        assertThat(publicKey.getKey(), equalTo("test-key"));
+        assertThat(publicKey.getKeyId(), equalTo("key-id"));
     }
 
     @Test
@@ -870,6 +944,13 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
     }
 
     @Test
+    public void userIsCollaborator() throws Exception {
+        GHRepository repo = getRepository();
+        GHUser collaborator = repo.listCollaborators().toList().get(0);
+        assertThat(repo.isCollaborator(collaborator), is(true));
+    }
+
+    @Test
     public void getCheckRuns() throws Exception {
         final int expectedCount = 8;
         // Use github-api repository as it has checks set up
@@ -1034,4 +1115,9 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
         repository.dispatch("test", clientPayload);
     }
 
+    @Test
+    public void createSecret() throws Exception {
+        GHRepository repo = getTempRepository();
+        repo.createSecret("secret", "encrypted", "public");
+    }
 }

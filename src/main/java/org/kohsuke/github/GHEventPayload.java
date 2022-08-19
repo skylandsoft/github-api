@@ -267,12 +267,15 @@ public abstract class GHEventPayload extends GitHubInteractiveObject {
         void lateBind() {
             if (getInstallation() == null) {
                 throw new IllegalStateException(
-                        "Expected check_suite payload, but got something else. Maybe we've got another type of event?");
+                        "Expected installation payload, but got something else. Maybe we've got another type of event?");
             }
             super.lateBind();
             if (repositories != null && !repositories.isEmpty()) {
                 try {
-                    for (GHRepository singleRepo : repositories) { // warp each of the repository
+                    for (GHRepository singleRepo : repositories) {
+                        // populate each repository
+                        // the repository information provided here is so limited
+                        // as to be unusable without populating, so we do it eagerly
                         singleRepo.populate();
                     }
                 } catch (IOException e) {
@@ -326,7 +329,7 @@ public abstract class GHEventPayload extends GitHubInteractiveObject {
         void lateBind() {
             if (getInstallation() == null) {
                 throw new IllegalStateException(
-                        "Expected check_suite payload, but got something else. Maybe we've got another type of event?");
+                        "Expected installation_repositories payload, but got something else. Maybe we've got another type of event?");
             }
             super.lateBind();
             List<GHRepository> repositories;
@@ -1504,6 +1507,43 @@ public abstract class GHEventPayload extends GitHubInteractiveObject {
     }
 
     /**
+     * A workflow job has been queued, is in progress, or has been completed.
+     *
+     * @see <a href=
+     *      "https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#workflow_job">
+     *      workflow job event</a>
+     * @see <a href="https://docs.github.com/en/rest/reference/actions#workflow-jobs">Actions Workflow Jobs</a>
+     */
+    public static class WorkflowJob extends GHEventPayload {
+
+        private GHWorkflowJob workflowJob;
+
+        /**
+         * Gets the workflow job.
+         *
+         * @return the workflow job
+         */
+        @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected")
+        public GHWorkflowJob getWorkflowJob() {
+            return workflowJob;
+        }
+
+        @Override
+        void lateBind() {
+            if (workflowJob == null) {
+                throw new IllegalStateException(
+                        "Expected workflow_job payload, but got something else.  Maybe we've got another type of event?");
+            }
+            super.lateBind();
+            GHRepository repository = getRepository();
+            if (repository == null) {
+                throw new IllegalStateException("Repository must not be null");
+            }
+            workflowJob.wrapUp(repository);
+        }
+    }
+
+    /**
      * A label was created, edited or deleted.
      *
      * @see <a href= "https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#label">
@@ -1567,6 +1607,49 @@ public abstract class GHEventPayload extends GitHubInteractiveObject {
         @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected")
         public GHLabel getLabel() {
             return label;
+        }
+    }
+
+    /**
+     * A star was created or deleted on a repository.
+     *
+     * @see <a href=
+     *      "https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#star">star
+     *      event</a>
+     */
+    public static class Star extends GHEventPayload {
+
+        private String starredAt;
+
+        /**
+         * Gets the date when the star is added. Is null when the star is deleted.
+         *
+         * @return the date when the star is added
+         */
+        public Date getStarredAt() {
+            return GitHubClient.parseDate(starredAt);
+        }
+    }
+
+    /**
+     * A project v2 item was archived, converted, created, edited, restored, deleted, or reordered.
+     *
+     * @see <a href=
+     *      "https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#projects_v2_item">star
+     *      event</a>
+     */
+    public static class ProjectsV2Item extends GHEventPayload {
+
+        private GHProjectsV2Item projectsV2Item;
+        private GHProjectsV2ItemChanges changes;
+
+        @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected")
+        public GHProjectsV2Item getProjectsV2Item() {
+            return projectsV2Item;
+        }
+
+        public GHProjectsV2ItemChanges getChanges() {
+            return changes;
         }
     }
 }

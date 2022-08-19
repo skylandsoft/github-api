@@ -6,9 +6,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-18.04
+    permissions:
+      contents: write  # for release-drafter/release-drafter to create a github release
+      pull-requests: write  # for release-drafter/release-drafter to add label to PR
     steps:
       - name: Release Drafter
         uses: release-drafter/release-drafter@v5
