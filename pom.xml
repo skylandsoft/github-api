@@ -193,31 +193,10 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.4.0</version>
           <configuration>
-            <source>8</source>
+            <source>11</source>
             <failOnWarnings>true</failOnWarnings>
             <doclint>all</doclint>
           </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>animal-sniffer-maven-plugin</artifactId>
-          <version>1.21</version>
-          <configuration>
-            <signature>
-              <groupId>org.codehaus.mojo.signature</groupId>
-              <artifactId>java18</artifactId>
-              <version>1.0</version>
-            </signature>
-          </configuration>
-          <executions>
-            <execution>
-              <id>ensure-java-1.8-class-library</id>
-              <phase>test</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -253,8 +232,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>11</source>
+          <target>11</target>
           <annotationProcessorPaths>
             <annotationProcessorPath>
               <groupId>org.jenkins-ci</groupId>
@@ -377,6 +356,31 @@
             <phase>verify</phase>
             <goals>
               <goal>cmp</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>
@@ -557,6 +561,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
@@ -569,280 +574,6 @@
       <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
-  <profiles>
-    <!-- only enable slow-or-flaky-test if -Dtest= is not present -->
-    <profile>
-      <id>slow-or-flaky-test</id>
-      <activation>
-        <property>
-          <name>!test</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>okhttp-test</id>
-                <phase>integration-test</phase>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <configuration>
-                  <classesDirectory>${project.basedir}/target/github-api-${project.version}.jar</classesDirectory>
-                  <excludesFile>src/test/resources/slow-or-flaky-tests.txt</excludesFile>
-                  <argLine>@{jacoco.surefire.argLine} ${surefire.argLine} -Dtest.github.connector=okhttp</argLine>
-                </configuration>
-              </execution>
-              <execution>
-                <id>slow-or-flaky-test</id>
-                <phase>integration-test</phase>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <configuration>
-                  <classesDirectory>${project.basedir}/target/github-api-${project.version}.jar</classesDirectory>
-                  <rerunFailingTestsCount>2</rerunFailingTestsCount>
-                  <!-- There are some tests that take longer or are a little
-                    flaky. Run them here. -->
-                  <includesFile>src/test/resources/slow-or-flaky-tests.txt</includesFile>
-                  <argLine>@{jacoco.surefire.argLine} ${surefire.argLine}</argLine>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>ci-non-windows</id>
-      <activation>
-        <property>
-          <name>enable-ci</name>
-        </property>
-        <os>
-          <family>!windows</family>
-        </os>
-      </activation>
-      <properties>
-        <!-- Only fail code coverage on non-windows machines -->
-        <jacoco.haltOnFailure>true</jacoco.haltOnFailure>
-      </properties>
-    </profile>
-    <profile>
-      <id>ci-all</id>
-      <activation>
-        <property>
-          <name>enable-ci</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>spotless-check</id>
-                <!-- In CI, run check early in the build -->
-                <phase>process-sources</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-              <execution>
-                <id>enforce-jacoco-exist</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <requireFilesExist>
-                      <files>
-                        <file>${project.build.directory}/jacoco-it.exec</file>
-                      </files>
-                    </requireFilesExist>
-                  </rules>
-                  <fail>true</fail>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>multirelease</id>
-      <activation>
-	    <jdk>[11,)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>animal-sniffer-maven-plugin</artifactId>
-            <configuration>
-              <ignores>
-                java.net.http.*
-              </ignores>
-            </configuration>
-          </plugin>
-          <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.10.1</version>
-            <executions>
-              <execution>
-                <id>compile-java-11</id>
-                <phase>compile</phase>
-                <goals>
-                  <goal>compile</goal>
-                </goals>
-                <configuration>
-                  <release>11</release>
-                  <source>11</source>
-                  <target>11</target>
-                  <compileSourceRoots>
-                    <compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
-                  </compileSourceRoots>
-                  <multiReleaseOutput>true</multiReleaseOutput>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <version>3.2.2</version>
-            <configuration>
-              <archive>
-                <manifestEntries>
-                  <Automatic-Module-Name>org.kohsuke.github.api</Automatic-Module-Name>
-                  <Multi-Release>true</Multi-Release>
-                </manifestEntries>
-              </archive>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>multirelease-test</id>
-      <activation>
-        <jdk>[11,)</jdk>
-        <property>
-          <name>!test</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>java11-test</id>
-                <phase>integration-test</phase>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <configuration>
-                  <classesDirectory>${project.basedir}/target/github-api-${project.version}.jar</classesDirectory>
-                  <useSystemClassLoader>false</useSystemClassLoader>
-                  <excludesFile>src/test/resources/slow-or-flaky-tests.txt</excludesFile>
-                  <argLine>@{jacoco.surefire.argLine} ${surefire.argLine} -Dtest.github.connector=httpclient</argLine>
-                </configuration>
-              </execution>
-              <execution>
-                <id>java11-urlconnection-test</id>
-                <phase>integration-test</phase>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <configuration>
-                  <classesDirectory>${project.basedir}/target/github-api-${project.version}.jar</classesDirectory>
-                  <useSystemClassLoader>false</useSystemClassLoader>
-                  <excludesFile>src/test/resources/slow-or-flaky-tests.txt</excludesFile>
-                  <argLine>@{jacoco.surefire.argLine} ${surefire.argLine} -Dtest.github.connector=urlconnection</argLine>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-  </profiles>
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <!-- select non-aggregate reports -->
-              <report>report-integration</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </reporting>
 
   <licenses>
     <license>
