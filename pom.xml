@@ -224,7 +224,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.bcel</groupId>
@@ -342,7 +342,7 @@
       <plugin>
         <groupId>com.github.siom79.japicmp</groupId>
         <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.15.7</version>
+        <version>0.16.0</version>
         <configuration>
           <parameter>
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
