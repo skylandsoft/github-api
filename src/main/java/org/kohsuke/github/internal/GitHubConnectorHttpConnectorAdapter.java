@@ -122,7 +122,8 @@ public final class GitHubConnectorHttpConnectorAdapter implements GitHubConnecto
 
     private static void setRequestMethod(String method, HttpURLConnection connection) throws IOException {
         try {
-            // JDK doesn't accept PATCH method as standard and throws java.net.ProtocolException: Invalid HTTP method: PATCH
+            // JDK doesn't accept PATCH method as standard and throws java.net.ProtocolException: Invalid HTTP method:
+            // PATCH
             // This workaround set X-HTTP-Method-Override header to PATCH method and use the actual method as POST
             if (HTTP_METHOD_PATCH.equals(method)) {
                 connection.setRequestMethod(HTTP_METHOD_POST);
