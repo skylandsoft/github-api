@@ -28,6 +28,10 @@ import javax.annotation.Nonnull;
  */
 public final class GitHubConnectorHttpConnectorAdapter implements GitHubConnector, HttpConnector {
 
+    private static final String HTTP_METHOD_PATCH = "PATCH";
+    private static final String HTTP_METHOD_POST = "POST";
+    private static final String HEADER_NAME_METHOD_OVERRIDE = "X-HTTP-Method-Override";
+
     /**
      * Internal for testing.
      */
@@ -118,8 +122,16 @@ public final class GitHubConnectorHttpConnectorAdapter implements GitHubConnecto
 
     private static void setRequestMethod(String method, HttpURLConnection connection) throws IOException {
         try {
-            connection.setRequestMethod(method);
+            // JDK doesn't accept PATCH method as standard and throws java.net.ProtocolException: Invalid HTTP method: PATCH
+            // This workaround set X-HTTP-Method-Override header to PATCH method and use the actual method as POST
+            if (HTTP_METHOD_PATCH.equals(method)) {
+                connection.setRequestMethod(HTTP_METHOD_POST);
+                connection.setRequestProperty(HEADER_NAME_METHOD_OVERRIDE, HTTP_METHOD_PATCH);
+            } else {
+                connection.setRequestMethod(method);
+            }
         } catch (ProtocolException e) {
+            // PATCH
             // JDK only allows one of the fixed set of verbs. Try to override that
             try {
                 Field $method = HttpURLConnection.class.getDeclaredField("method");
@@ -143,7 +155,7 @@ public final class GitHubConnectorHttpConnectorAdapter implements GitHubConnecto
                 throw (IOException) new IOException("Failed to set the custom verb").initCause(x);
             }
         }
-        if (!connection.getRequestMethod().equals(method))
+        if (!connection.getRequestMethod().equals(method) && !HTTP_METHOD_PATCH.equals(method))
             throw new IllegalStateException("Failed to set the request method to " + method);
     }
 
