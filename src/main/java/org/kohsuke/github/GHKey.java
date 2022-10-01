@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.IOException;
 
+// TODO: Auto-generated Javadoc
 /**
  * SSH public key.
  *
@@ -12,8 +13,14 @@ import java.io.IOException;
  */
 @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "JSON API")
 public class GHKey extends GitHubInteractiveObject {
+
+    /** The title. */
     protected String url, key, title;
+
+    /** The verified. */
     protected boolean verified;
+
+    /** The id. */
     protected int id;
 
     /**
@@ -61,6 +68,11 @@ public class GHKey extends GitHubInteractiveObject {
         return verified;
     }
 
+    /**
+     * To string.
+     *
+     * @return the string
+     */
     public String toString() {
         return new ToStringBuilder(this).append("title", title).append("id", id).append("key", key).toString();
     }
