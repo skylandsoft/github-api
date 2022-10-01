@@ -98,6 +98,19 @@ public class GHMyself extends GHUser {
     }
 
     /**
+     * Gets public key.
+     *
+     * @param id
+     *            the id
+     * @return the gh public key
+     * @throws IOException
+     *             the io exception
+     */
+    public GHKey getPublicKey(int id) throws IOException {
+        return root().createRequest().method("GET").withUrlPath("/user/keys/" + id).fetch(GHKey.class);
+    }
+
+    /**
      * Returns the read-only list of all the pulic keys of the current user.
      * <p>
      * NOTE: When using OAuth authenticaiton, the READ/WRITE User scope is required by the GitHub APIs, otherwise you

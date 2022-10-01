@@ -551,11 +551,22 @@ public class AppTest extends AbstractGitHubWireMockTest {
         try {
             assertThat(newPublicKey.getId(), notNullValue());
 
-            GHKey k = Iterables.find(me.getPublicKeys(), new Predicate<GHKey>() {
-                public boolean apply(GHKey publicKey) {
-                    return newPublicKey.getId() == publicKey.getId();
-                }
-            });
+            GHKey k = Iterables.find(me.getPublicKeys(), publicKey -> newPublicKey.getId() == publicKey.getId());
+            assertThat(k, notNullValue());
+        } finally {
+            newPublicKey.delete();
+        }
+    }
+
+    @Test
+    public void testGetPublicKey() throws IOException {
+        GHMyself me = gitHub.getMyself();
+        final GHKey newPublicKey = me.addPublicKey("test",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUt0RAycC5cS42JKh6SecfFZBR1RrF+2hYMctz4mk74/arBE+wFb7fnSHGzdGKX2h5CFOWODifRCJVhB7hlVxodxe+QkQQYAEL/x1WVCJnGgTGQGOrhOMj95V3UE5pQKhsKD608C+u5tSofcWXLToP1/wZ7U4/AHjqYi08OLsWToHCax55TZkvdt2jo0hbIoYU+XI9Q8Uv4ONDN1oabiOdgeKi8+crvHAuvNleiBhWVBzFh8KdfzaH5uNdw7ihhFjEd1vzqACsjCINCjdMfzl6jD9ExuWuE92nZJnucls2cEoNC6k2aPmrZDg9hA32FXVpyseY+bDUWFU6LO2LG6PB kohsuke@atlas");
+        try {
+            assertThat(newPublicKey.getId(), notNullValue());
+
+            GHKey k = me.getPublicKey(newPublicKey.getId());
             assertThat(k, notNullValue());
         } finally {
             newPublicKey.delete();
