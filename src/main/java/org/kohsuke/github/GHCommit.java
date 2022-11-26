@@ -253,7 +253,7 @@ public class GHCommit {
     /**
      * The Class User.
      */
-    static class User {
+    public static class User {
 
         /** The gravatar id. */
         // TODO: what if someone who doesn't have an account on GitHub makes a commit?
