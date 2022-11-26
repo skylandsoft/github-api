@@ -266,6 +266,22 @@ public class GHCommit {
 
         /** The login. */
         String login;
+
+        public int getId() {
+            return id;
+        }
+
+        public String getAvatarUrl() {
+            return avatar_url;
+        }
+
+        public String getGravatarId() {
+            return gravatar_id;
+        }
+
+        public String getLogin() {
+            return login;
+        }
     }
 
     /** The sha. */
