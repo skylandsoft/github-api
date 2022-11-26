@@ -469,6 +469,17 @@ public class GHCommit {
     }
 
     /**
+     * Gets author with no user information populated.
+     *
+     * @return the committer
+     * @throws IOException
+     *             the io exception
+     */
+    public GHCommit.User getAuthorRaw() throws IOException {
+        return author;
+    }
+
+    /**
      * Gets the date the change was authored on.
      *
      * @return the date the change was authored on.
@@ -489,6 +500,17 @@ public class GHCommit {
     public GHUser getCommitter() throws IOException {
         populate();
         return resolveUser(committer);
+    }
+
+    /**
+     * Gets committer with no user information populated.
+     *
+     * @return the committer
+     * @throws IOException
+     *             the io exception
+     */
+    public GHCommit.User getCommitterRaw() throws IOException {
+        return committer;
     }
 
     /**
