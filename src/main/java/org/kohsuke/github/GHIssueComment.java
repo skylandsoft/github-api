@@ -23,6 +23,7 @@
  */
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ public class GHIssueComment extends GHObject implements Reactable {
     GHIssue owner;
 
     private String body, gravatar_id, html_url, author_association;
+    private long in_reply_to_id;
     private GHUser user; // not fully populated. beware.
 
     /**
@@ -88,7 +90,7 @@ public class GHIssueComment extends GHObject implements Reactable {
     }
 
     /**
-     * Gets the user who posted this comment.
+     * Gets the user who posted this comment fully populated.
      *
      * @return the user
      * @throws IOException
@@ -96,6 +98,27 @@ public class GHIssueComment extends GHObject implements Reactable {
      */
     public GHUser getUser() throws IOException {
         return owner == null || owner.isOffline() ? user : owner.root().getUser(user.getLogin());
+    }
+
+    /**
+     * Gets the user who posted this comment not fully populated.
+     *
+     * @return the user
+     * @throws IOException
+     *             the io exception
+     */
+    public GHUser getRawUser() throws IOException {
+        return user;
+    }
+
+    /**
+     * The comment ID to reply to.
+     *
+     * @return Unique ID number of the comment ID to reply to.
+     */
+    @WithBridgeMethods(value = { String.class, int.class }, adapterMethod = "longToStringOrInt")
+    public long getInReplyToId() {
+        return in_reply_to_id;
     }
 
     /**
