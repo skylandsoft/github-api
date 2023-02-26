@@ -45,7 +45,7 @@ import static org.kohsuke.github.internal.Previews.SHADOW_CAT;
  * A pull request.
  *
  * @author Kohsuke Kawaguchi
- * @see GHRepository#getPullRequest(int) GHRepository#getPullRequest(int)
+ * @see GHRepository#getPullRequest(long) GHRepository#getPullRequest(long)
  */
 @SuppressWarnings({ "UnusedDeclaration" })
 public class GHPullRequest extends GHIssue implements Refreshable {

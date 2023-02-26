@@ -1628,16 +1628,16 @@ public class GHRepository extends GHObject {
     /**
      * Retrieves a specified pull request.
      *
-     * @param i
-     *            the
+     * @param id
+     *            the ID
      * @return the pull request
      * @throws IOException
      *             the io exception
      */
-    public GHPullRequest getPullRequest(int i) throws IOException {
+    public GHPullRequest getPullRequest(long id) throws IOException {
         return root().createRequest()
                 .withPreview(SHADOW_CAT)
-                .withUrlPath(getApiTailUrl("pulls/" + i))
+                .withUrlPath(getApiTailUrl("pulls/" + id))
                 .fetch(GHPullRequest.class)
                 .wrapUp(this);
     }
