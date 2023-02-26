@@ -872,8 +872,8 @@ public class GHIssue extends GHObject implements Reactable {
      */
     public PagedIterable<GHIssueEvent> listTimelineEvents() throws IOException {
         return root().createRequest()
-            .withUrlPath(getRepository().getApiTailUrl(String.format("/issues/%s/timeline", number)))
-            .toIterable(GHIssueEvent[].class, item -> item.wrapUp(this));
+                .withUrlPath(getRepository().getApiTailUrl(String.format("/issues/%s/timeline", number)))
+                .toIterable(GHIssueEvent[].class, item -> item.wrapUp(this));
     }
 
     /**
