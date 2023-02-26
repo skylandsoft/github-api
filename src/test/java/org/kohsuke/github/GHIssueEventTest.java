@@ -38,7 +38,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
 
         GHIssueEvent event = list.get(0);
         assertThat(event.getIssue().getNumber(), equalTo(issue.getNumber()));
-        assertThat(event.getEvent(), equalTo("labeled"));
+        assertThat(event.getEvent(), equalTo(GHIssueType.LABELED));
 
         // Test that we can get a single event directly.
         GHIssueEvent eventFromRepo = repo.getIssueEvent(event.getId());
@@ -70,7 +70,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
         final List<GHIssueEvent> list = pullRequest.getEvents();
         assertThat(list.size(), equalTo(1));
         final GHIssueEvent event = list.get(0);
-        assertThat(event.getEvent(), equalTo("review_requested"));
+        assertThat(event.getEvent(), equalTo(GHIssueType.REVIEW_REQUESTED));
         assertThat(event.getReviewRequester(), notNullValue());
         assertThat(event.getReviewRequester().getLogin(), equalTo("t0m4uk1991"));
         assertThat(event.getRequestedReviewer(), notNullValue());
@@ -102,7 +102,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
 
         GHIssueEvent event = list.get(0);
         assertThat(event.getIssue().getNumber(), equalTo(issue.getNumber()));
-        assertThat(event.getEvent(), equalTo("renamed"));
+        assertThat(event.getEvent(), equalTo(GHIssueType.RENAMED));
         assertThat(event.getRename(), notNullValue());
         assertThat(event.getRename().getFrom(), equalTo("Some invalid issue name"));
         assertThat(event.getRename().getTo(), equalTo("Fixed issue name"));
@@ -111,7 +111,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
         GHIssueEvent eventFromRepo = repo.getIssueEvent(event.getId());
         assertThat(eventFromRepo.getId(), equalTo(event.getId()));
         assertThat(eventFromRepo.getCreatedAt(), equalTo(event.getCreatedAt()));
-        assertThat(eventFromRepo.getEvent(), equalTo("renamed"));
+        assertThat(eventFromRepo.getEvent(), equalTo(GHIssueType.RENAMED));
         assertThat(eventFromRepo.getRename(), notNullValue());
         assertThat(eventFromRepo.getRename().getFrom(), equalTo("Some invalid issue name"));
         assertThat(eventFromRepo.getRename().getTo(), equalTo("Fixed issue name"));

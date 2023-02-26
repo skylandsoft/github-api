@@ -71,8 +71,12 @@ public class GHIssueEvent extends GitHubInteractiveObject {
      *
      * @return the event
      */
-    public String getEvent() {
-        return event;
+    public GHIssueType getEvent() {
+        try {
+            return GHIssueType.valueOf(event);
+        } catch (Exception ignore) {
+            return null;
+        }
     }
 
     /**

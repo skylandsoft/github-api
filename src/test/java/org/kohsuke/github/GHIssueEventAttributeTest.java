@@ -22,14 +22,14 @@ import static org.hamcrest.Matchers.notNullValue;
 public class GHIssueEventAttributeTest extends AbstractGitHubWireMockTest {
 
     private enum Type implements Predicate<GHIssueEvent>, Consumer<GHIssueEvent> {
-        milestone(e -> assertThat(e.getMilestone(), notNullValue()), "milestoned", "demilestoned"),
-        label(e -> assertThat(e.getLabel(), notNullValue()), "labeled", "unlabeled"),
-        assignment(e -> assertThat(e.getAssignee(), notNullValue()), "assigned", "unassigned");
+        milestone(e -> assertThat(e.getMilestone(), notNullValue()), GHIssueType.MILESTONED, GHIssueType.DEMILESTONED),
+        label(e -> assertThat(e.getLabel(), notNullValue()), GHIssueType.LABELED, GHIssueType.UNLABELED),
+        assignment(e -> assertThat(e.getAssignee(), notNullValue()), GHIssueType.ASSIGNED, GHIssueType.UNASSIGNED);
 
         private final Consumer<GHIssueEvent> assertion;
-        private final Set<String> subtypes;
+        private final Set<GHIssueType> subtypes;
 
-        Type(final Consumer<GHIssueEvent> assertion, final String... subtypes) {
+        Type(final Consumer<GHIssueEvent> assertion, final GHIssueType... subtypes) {
             this.assertion = assertion;
             this.subtypes = new HashSet<>(asList(subtypes));
         }
