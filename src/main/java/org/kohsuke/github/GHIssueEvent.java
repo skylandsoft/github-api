@@ -3,6 +3,7 @@ package org.kohsuke.github;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Date;
+import java.util.Locale;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -73,7 +74,7 @@ public class GHIssueEvent extends GitHubInteractiveObject {
      */
     public GHIssueType getEvent() {
         try {
-            return GHIssueType.valueOf(event);
+            return GHIssueType.valueOf(event.replace('-', '_').replace(' ', '_').toUpperCase(Locale.ENGLISH));
         } catch (Exception ignore) {
             return null;
         }
