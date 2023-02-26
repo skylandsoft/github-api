@@ -33,7 +33,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
         issue.setLabels("test-label");
 
         // Test that the events are present.
-        List<GHIssueEvent> list = issue.listEvents().toList();
+        List<GHIssueEvent> list = issue.getEvents();
         assertThat(list.size(), equalTo(1));
 
         GHIssueEvent event = list.get(0);
@@ -67,7 +67,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
         pullRequest.requestReviewers(reviewers);
 
         // Test that the event is present.
-        final List<GHIssueEvent> list = pullRequest.listEvents().toList();
+        final List<GHIssueEvent> list = pullRequest.getEvents();
         assertThat(list.size(), equalTo(1));
         final GHIssueEvent event = list.get(0);
         assertThat(event.getEvent(), equalTo("review_requested"));
@@ -97,7 +97,7 @@ public class GHIssueEventTest extends AbstractGitHubWireMockTest {
         issue.setTitle("Fixed issue name");
 
         // Test that the event is present.
-        List<GHIssueEvent> list = issue.listEvents().toList();
+        List<GHIssueEvent> list = issue.getEvents();
         assertThat(list.size(), equalTo(1));
 
         GHIssueEvent event = list.get(0);
