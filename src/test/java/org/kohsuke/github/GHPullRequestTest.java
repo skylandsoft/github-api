@@ -239,9 +239,9 @@ public class GHPullRequestTest extends AbstractGitHubWireMockTest {
         GHPullRequest p = getRepository().createPullRequest(name, "test/stable", "main", "## test");
         try {
             // System.out.println(p.getUrl());
-            assertThat(p.listReviewComments().toList(), is(empty()));
+            assertThat(p.getReviewComments(), is(empty()));
             p.createReviewComment("Sample review comment", p.getHead().getSha(), "README.md", 1);
-            List<GHPullRequestReviewComment> comments = p.listReviewComments().toList();
+            List<GHPullRequestReviewComment> comments = p.getReviewComments();
             assertThat(comments.size(), equalTo(1));
             GHPullRequestReviewComment comment = comments.get(0);
             assertThat(comment.getBody(), equalTo("Sample review comment"));
@@ -274,17 +274,17 @@ public class GHPullRequestTest extends AbstractGitHubWireMockTest {
 
             GHPullRequestReviewComment reply = comment.reply("This is a reply.");
             assertThat(reply.getInReplyToId(), equalTo(comment.getId()));
-            comments = p.listReviewComments().toList();
+            comments = p.getReviewComments();
 
             assertThat(comments.size(), equalTo(2));
 
             comment.update("Updated review comment");
-            comments = p.listReviewComments().toList();
+            comments = p.getReviewComments();
             comment = comments.get(0);
             assertThat(comment.getBody(), equalTo("Updated review comment"));
 
             comment.delete();
-            comments = p.listReviewComments().toList();
+            comments = p.getReviewComments();
             // Reply is still present after delete of original comment, but no longer has replyToId
             assertThat(comments.size(), equalTo(1));
             assertThat(comments.get(0).getId(), equalTo(reply.getId()));

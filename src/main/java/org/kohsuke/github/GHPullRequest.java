@@ -224,7 +224,7 @@ public class GHPullRequest extends GHIssue implements Refreshable {
      * @throws IOException
      *             the io exception
      */
-    public int getReviewComments() throws IOException {
+    public int getReviewCommentsCount() throws IOException {
         populate();
         return review_comments;
     }
@@ -385,6 +385,18 @@ public class GHPullRequest extends GHIssue implements Refreshable {
     public List<GHTeam> getRequestedTeams() throws IOException {
         refresh(requested_teams);
         return Collections.unmodifiableList(Arrays.asList(requested_teams));
+    }
+
+    /**
+     * Obtains all the review comments associated with this pull request.
+     *
+     * @return the review comments
+     * @throws IOException
+     *             the io exception
+     * @see #listReviewComments() #listReviewComments()
+     */
+    public List<GHPullRequestReviewComment> getReviewComments() throws IOException {
+        return listReviewComments().toList();
     }
 
     /**

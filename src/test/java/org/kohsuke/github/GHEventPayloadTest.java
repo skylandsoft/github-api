@@ -407,7 +407,7 @@ public class GHEventPayloadTest extends AbstractGitHubWireMockTest {
         assertThat(event.getPullRequest().getMergeableState(), is("unknown"));
         assertThat(event.getPullRequest().getMergedBy(), nullValue());
         assertThat(event.getPullRequest().getCommentsCount(), is(0));
-        assertThat(event.getPullRequest().getReviewComments(), is(0));
+        assertThat(event.getPullRequest().getReviewCommentsCount(), is(0));
         assertThat(event.getPullRequest().getAdditions(), is(1));
         assertThat(event.getPullRequest().getDeletions(), is(1));
         assertThat(event.getPullRequest().getChangedFiles(), is(1));
@@ -489,7 +489,7 @@ public class GHEventPayloadTest extends AbstractGitHubWireMockTest {
         assertThat(event.getPullRequest().getMergeableState(), is("draft"));
         assertThat(event.getPullRequest().getMergedBy(), nullValue());
         assertThat(event.getPullRequest().getCommentsCount(), is(1));
-        assertThat(event.getPullRequest().getReviewComments(), is(14));
+        assertThat(event.getPullRequest().getReviewCommentsCount(), is(14));
         assertThat(event.getPullRequest().getAdditions(), is(137));
         assertThat(event.getPullRequest().getDeletions(), is(81));
         assertThat(event.getPullRequest().getChangedFiles(), is(22));
