@@ -122,6 +122,16 @@ public class GHPullRequestReviewComment extends GHObject implements Reactable {
     }
 
     /**
+     * Gets the user who posted this comment not fully populated.
+     *
+     * @return the user
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getRawUser() {
+        return user;
+    }
+
+    /**
      * Gets path.
      *
      * @return the path
