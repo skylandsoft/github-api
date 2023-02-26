@@ -862,4 +862,29 @@ public class GHIssue extends GHObject implements Reactable {
     public List<GHIssueEvent> getEvents() throws IOException {
         return listEvents().toList();
     }
+
+    /**
+     * Lists timeline events for this issue. See https://developer.github.com/v3/issues/timeline/
+     *
+     * @return the paged iterable
+     * @throws IOException
+     *             the io exception
+     */
+    public PagedIterable<GHIssueEvent> listTimelineEvents() throws IOException {
+        return root().createRequest()
+            .withUrlPath(getRepository().getApiTailUrl(String.format("/issues/%s/timeline", number)))
+            .toIterable(GHIssueEvent[].class, item -> item.wrapUp(this));
+    }
+
+    /**
+     * Lists all timeline events for this issue. See https://developer.github.com/v3/issues/timeline/
+     *
+     * @return the events
+     * @throws IOException
+     *             the io exception
+     * @see #listTimelineEvents() #listTimelineEvents()
+     */
+    public List<GHIssueEvent> getTimelineEvents() throws IOException {
+        return listTimelineEvents().toList();
+    }
 }
