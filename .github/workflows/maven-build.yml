@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'zulu'
+          distribution: 'temurin'
           cache: 'maven'
       - name: Maven Install (skipTests)
         env:
@@ -45,7 +45,8 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'adopt'
+          distribution: 'temurin'
+          cache: 'maven'
       - name: Publish package
         run: mvn --batch-mode deploy -DskipTests --file pom.xml
         env:
