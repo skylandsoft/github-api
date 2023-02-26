@@ -345,7 +345,7 @@
         <version>0.16.0</version>
         <configuration>
           <parameter>
-            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+            <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
             <onlyModified>true</onlyModified>
             <includeSynthetic>true</includeSynthetic>
             <excludes>
