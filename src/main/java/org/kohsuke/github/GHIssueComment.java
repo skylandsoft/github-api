@@ -104,10 +104,9 @@ public class GHIssueComment extends GHObject implements Reactable {
      * Gets the user who posted this comment not fully populated.
      *
      * @return the user
-     * @throws IOException
-     *             the io exception
      */
-    public GHUser getRawUser() throws IOException {
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getRawUser() {
         return user;
     }
 
