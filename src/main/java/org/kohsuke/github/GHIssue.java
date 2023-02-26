@@ -850,4 +850,16 @@ public class GHIssue extends GHObject implements Reactable {
                 .withUrlPath(getRepository().getApiTailUrl(String.format("/issues/%s/events", number)))
                 .toIterable(GHIssueEvent[].class, item -> item.wrapUp(this));
     }
+
+    /**
+     * Lists all events for this issue. See https://developer.github.com/v3/issues/events/
+     *
+     * @return the events
+     * @throws IOException
+     *             the io exception
+     * @see #listEvents() #listEvents()
+     */
+    public List<GHIssueEvent> getEvents() throws IOException {
+        return listEvents().toList();
+    }
 }
