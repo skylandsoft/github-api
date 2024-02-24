@@ -70,30 +70,6 @@ public class GHMyself extends GHUser {
     }
 
     /**
-     * Creates a pulic key for the current user.
-     * <p>
-     * NOTE: When using OAuth authenticaiton, the READ/WRITE User scope is required by the GitHub APIs, otherwise you
-     * will get a 404 NOT FOUND.
-     *
-     * @param title
-     *            the title
-     * @param key
-     *            the key
-     *
-     * @return the gh public key
-     * @throws IOException
-     *             the io exception
-     */
-    public GHKey addPublicKey(String title, String key) throws IOException {
-        return root().createRequest()
-                .method("POST")
-                .with("title", title)
-                .with("key", key)
-                .withUrlPath("/user/keys")
-                .fetch(GHKey.class);
-    }
-
-    /**
      * Gets public key.
      *
      * @param id
