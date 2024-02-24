@@ -22,7 +22,7 @@ public class EnumTest extends AbstractGitHubWireMockTest {
         assertThat(GHCheckRun.Conclusion.values().length, equalTo(9));
         assertThat(GHCheckRun.Status.values().length, equalTo(4));
 
-        assertThat(GHCommentAuthorAssociation.values().length, equalTo(7));
+        assertThat(GHCommentAuthorAssociation.values().length, equalTo(8));
 
         assertThat(GHCommitState.values().length, equalTo(4));
 
@@ -32,7 +32,7 @@ public class EnumTest extends AbstractGitHubWireMockTest {
 
         assertThat(GHDirection.values().length, equalTo(2));
 
-        assertThat(GHEvent.values().length, equalTo(64));
+        assertThat(GHEvent.values().length, equalTo(65));
         assertThat(GHEvent.ALL.symbol(), equalTo("*"));
         assertThat(GHEvent.PULL_REQUEST.symbol(), equalTo(GHEvent.PULL_REQUEST.toString().toLowerCase()));
 
@@ -55,7 +55,7 @@ public class EnumTest extends AbstractGitHubWireMockTest {
         assertThat(GHOrganization.Role.values().length, equalTo(2));
         assertThat(GHOrganization.Permission.values().length, equalTo(5));
 
-        assertThat(GHPermissionType.values().length, equalTo(4));
+        assertThat(GHPermissionType.values().length, equalTo(5));
 
         assertThat(GHProject.ProjectState.values().length, equalTo(2));
         assertThat(GHProject.ProjectStateFilter.values().length, equalTo(3));

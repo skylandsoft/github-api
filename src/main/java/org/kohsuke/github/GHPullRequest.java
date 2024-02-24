@@ -100,7 +100,12 @@ public class GHPullRequest extends GHIssue implements Refreshable {
         if (owner == null) {
             // Issues returned from search to do not have an owner. Attempt to use url.
             final URL url = Objects.requireNonNull(getUrl(), "Missing instance URL!");
-            return StringUtils.prependIfMissing(url.toString().replace(root().getApiUrl(), ""), "/");
+            // The url sourced above is of the form '/repos/<owner>/<reponame>/issues/', which
+            // subsequently issues requests against the `/issues/` handler, causing a 404 when
+            // asking for, say, a list of commits associated with a PR. Replace the `/issues/`
+            // with `/pulls/` to avoid that.
+            return StringUtils.prependIfMissing(url.toString().replace(root().getApiUrl(), ""), "/")
+                    .replace("/issues/", "/pulls/");
         }
         return "/repos/" + owner.getOwnerName() + "/" + owner.getName() + "/pulls/" + number;
     }
@@ -242,9 +247,9 @@ public class GHPullRequest extends GHIssue implements Refreshable {
     }
 
     /**
-     * Gets commits.
+     * Gets the number of commits.
      *
-     * @return the commits
+     * @return the number of commits
      * @throws IOException
      *             the io exception
      */

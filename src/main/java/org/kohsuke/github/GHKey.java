@@ -78,7 +78,7 @@ public class GHKey extends GitHubInteractiveObject {
     }
 
     /**
-     * Delete.
+     * Delete the GHKey
      *
      * @throws IOException
      *             the io exception
