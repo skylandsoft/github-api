@@ -4,7 +4,6 @@ import okhttp3.OkHttpClient;
 import org.kohsuke.github.HttpConnector;
 import org.kohsuke.github.connector.GitHubConnector;
 import org.kohsuke.github.extras.HttpClientGitHubConnector;
-import org.kohsuke.github.extras.okhttp3.OkHttpConnector;
 import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 
 /**
@@ -43,8 +42,6 @@ public final class DefaultGitHubConnector {
 
         if (defaultConnectorProperty.equalsIgnoreCase("okhttp")) {
             return new OkHttpGitHubConnector(new OkHttpClient.Builder().build());
-        } else if (defaultConnectorProperty.equalsIgnoreCase("okhttpconnector")) {
-            return new GitHubConnectorHttpConnectorAdapter(new OkHttpConnector(new OkHttpClient.Builder().build()));
         } else if (defaultConnectorProperty.equalsIgnoreCase("urlconnection")) {
             return new GitHubConnectorHttpConnectorAdapter(HttpConnector.DEFAULT);
         } else if (defaultConnectorProperty.equalsIgnoreCase("httpclient")) {

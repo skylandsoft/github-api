@@ -732,8 +732,8 @@ public class AppTest extends AbstractGitHubWireMockTest {
     @Test
     public void testGetPublicKey() throws Exception {
         GHMyself me = gitHub.getMyself();
-        final GHKey newPublicKey = me.addPublicKey("test",
-                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUt0RAycC5cS42JKh6SecfFZBR1RrF+2hYMctz4mk74/arBE+wFb7fnSHGzdGKX2h5CFOWODifRCJVhB7hlVxodxe+QkQQYAEL/x1WVCJnGgTGQGOrhOMj95V3UE5pQKhsKD608C+u5tSofcWXLToP1/wZ7U4/AHjqYi08OLsWToHCax55TZkvdt2jo0hbIoYU+XI9Q8Uv4ONDN1oabiOdgeKi8+crvHAuvNleiBhWVBzFh8KdfzaH5uNdw7ihhFjEd1vzqACsjCINCjdMfzl6jD9ExuWuE92nZJnucls2cEoNC6k2aPmrZDg9hA32FXVpyseY+bDUWFU6LO2LG6PB kohsuke@atlas");
+        final GHKey newPublicKey = me.addPublicKey("Temporary user key",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDepW2/BSVFM2AfuGGsvi+vjQzC0EBD3R+/7PNEvP0/nvTWxiC/tthfvvCJR6TKrsprCir5tiJFm73gX+K18W0RKYpkyg8H6d1eZu3q/JOiGvoDPeN8Oe9hOGeeexw1WOiz7ESPHzZYXI981evzHAzxxn8zibr2EryopVNsXyoenw==");
         try {
             assertThat(newPublicKey.getId(), notNullValue());
 

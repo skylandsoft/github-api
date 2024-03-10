@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.kohsuke</groupId>
   <artifactId>github-api</artifactId>
-  <version>1.327-QREVIEW</version>
+  <version>1.328-QREVIEW</version>
   <name>GitHub API for Java</name>
   <url>https://github-api.kohsuke.org/</url>
   <description>GitHub API for Java</description>
@@ -28,12 +28,16 @@
   </distributionManagement>
 
   <properties>
+    <java.version>17</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spotbugs-maven-plugin.version>4.8.1.0</spotbugs-maven-plugin.version>
     <spotbugs.version>4.7.3</spotbugs.version>
     <spotbugs-maven-plugin.failOnError>true</spotbugs-maven-plugin.failOnError>
     <hamcrest.version>2.2</hamcrest.version>
-    <okhttp3.version>4.9.2</okhttp3.version>
+    <okhttp3.version>4.12.0</okhttp3.version>
     <okio.version>3.7.0</okio.version>
     <!-- Using this as the minimum bar for code coverage.  Adding methods without covering them will fail this. -->
     <jacoco.coverage.target.bundle.method>0.70</jacoco.coverage.target.bundle.method>
@@ -163,16 +167,10 @@
                       <exclude>org.kohsuke.github.extras.HttpClientGitHubConnector.**</exclude>
                       <exclude>org.kohsuke.github.extras.HttpClientGitHubConnector</exclude>
 
-                      <!-- Code implemented externally -->
-                      <exclude>org.kohsuke.github.extras.okhttp3.ObsoleteUrlFactory.**</exclude>
-                      <exclude>org.kohsuke.github.extras.okhttp3.ObsoleteUrlFactory</exclude>
-
                       <!-- Sample only -->
                       <exclude>org.kohsuke.github.example.*</exclude>
 
                       <!-- Deprecated -->
-                      <exclude>org.kohsuke.github.extras.OkHttpConnector</exclude>
-                      <exclude>org.kohsuke.github.extras.OkHttp3Connector</exclude>
                       <exclude>org.kohsuke.github.EnforcementLevel</exclude>
                       <exclude>org.kohsuke.github.GHPerson.1</exclude>
                       <exclude>org.kohsuke.github.GHCompare.User</exclude>
@@ -213,7 +211,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.4.1</version>
           <configuration>
-            <source>11</source>
+            <source>17</source>
             <failOnWarnings>false</failOnWarnings>
             <doclint>all</doclint>
           </configuration>
@@ -249,11 +247,10 @@
         </dependencies>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
-          <source>11</source>
-          <target>11</target>
           <annotationProcessorPaths>
             <annotationProcessorPath>
               <groupId>org.jenkins-ci</groupId>
@@ -262,24 +259,6 @@
             </annotationProcessorPath>
           </annotationProcessorPaths>
         </configuration>
-        <executions>
-          <execution>
-            <id>compile-java-11</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-            <configuration>
-              <release>11</release>
-              <source>11</source>
-              <target>11</target>
-              <compileSourceRoots>
-                <compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
-              </compileSourceRoots>
-              <multiReleaseOutput>true</multiReleaseOutput>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -342,7 +321,6 @@
           <java>
             <includes>
               <include>src/main/java/**/*.java</include>
-              <include>src/main/java11/**/*.java</include>
               <include>src/test/java/**/*.java</include>
             </includes>
 
@@ -578,20 +556,6 @@
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
       <version>${okhttp3.version}</version>
-      <optional>true</optional>
-    </dependency>
-    <!-- This is the last version of okhttp3 that support UrlConnection -->
-    <!-- The class using this has been deprecated, this dependency can be remove when that class is. -->
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp-urlconnection</artifactId>
-      <version>3.12.3</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp-urlconnection</artifactId>
-      <version>2.7.5</version>
       <optional>true</optional>
     </dependency>
     <dependency>

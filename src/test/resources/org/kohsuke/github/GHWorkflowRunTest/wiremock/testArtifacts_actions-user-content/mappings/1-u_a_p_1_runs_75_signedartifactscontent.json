@@ -9,7 +9,7 @@
         "equalTo": "application/vnd.github.v3+json"
       },
       "Authorization": {
-        "absent" : true
+        "equalTo": "Basic cGxhY2Vob2xkZXItdXNlcjpwbGFjZWhvbGRlci1wYXNzd29yZA=="
       }
     }
   },

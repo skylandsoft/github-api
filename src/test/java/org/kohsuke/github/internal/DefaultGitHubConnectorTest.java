@@ -9,7 +9,6 @@ import org.kohsuke.github.connector.GitHubConnector;
 import org.kohsuke.github.connector.GitHubConnectorRequest;
 import org.kohsuke.github.connector.GitHubConnectorResponse;
 import org.kohsuke.github.extras.HttpClientGitHubConnector;
-import org.kohsuke.github.extras.okhttp3.OkHttpConnector;
 
 import java.io.IOException;
 
@@ -62,11 +61,6 @@ public class DefaultGitHubConnectorTest extends AbstractGitHubWireMockTest {
         assertThat(connector, instanceOf(GitHubConnectorHttpConnectorAdapter.class));
         adapter = (GitHubConnectorHttpConnectorAdapter) connector;
         assertThat(adapter.httpConnector, equalTo(HttpConnector.DEFAULT));
-
-        connector = DefaultGitHubConnector.create("okhttpconnector");
-        assertThat(connector, instanceOf(GitHubConnectorHttpConnectorAdapter.class));
-        adapter = (GitHubConnectorHttpConnectorAdapter) connector;
-        assertThat(adapter.httpConnector, instanceOf(OkHttpConnector.class));
 
         connector = DefaultGitHubConnector.create("okhttp");
 
