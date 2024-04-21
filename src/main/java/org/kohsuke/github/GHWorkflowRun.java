@@ -502,6 +502,12 @@ public class GHWorkflowRun extends GHObject {
         IN_PROGRESS,
         /** The completed. */
         COMPLETED,
+        /** The waiting. */
+        WAITING,
+        /** The requestes. */
+        REQUESTED,
+        /** The pending. */
+        PENDING,
         /** The unknown. */
         UNKNOWN;
 
