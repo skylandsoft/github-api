@@ -1,8 +1,6 @@
 package org.kohsuke.github;
 
-import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.kohsuke.github.internal.EnumUtils;
 
 /**
  * Changes made to a team.
@@ -10,9 +8,76 @@ import org.kohsuke.github.internal.EnumUtils;
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_FIELD" }, justification = "JSON API")
 public class GHMemberChanges {
 
+    /**
+     * Changes to role name.
+     */
+    public static class FromRoleName {
+
+        private String to;
+
+        /**
+         * Create default FromRoleName instance
+         */
+        public FromRoleName() {
+        }
+
+        /**
+         * Gets the to.
+         *
+         * @return the to
+         */
+        public String getTo() {
+            return to;
+        }
+    }
+
+    /**
+     * Changes to permission.
+     */
+    public static class FromToPermission {
+
+        private String from;
+
+        private String to;
+
+        /**
+         * Create default FromToPermission instance
+         */
+        public FromToPermission() {
+        }
+
+        /**
+         * Gets the from.
+         *
+         * Cannot use {@link GHOrganization.Permission#ADMIN} due to messy underlying design.
+         *
+         * @return the from
+         */
+        public String getFrom() {
+            return from;
+        }
+
+        /**
+         * Gets the to.
+         *
+         * Cannot use {@link GHOrganization.Permission#ADMIN} due to messy underlying design.
+         *
+         * @return the to
+         */
+        public String getTo() {
+            return to;
+        }
+    }
+
     private FromToPermission permission;
 
     private FromRoleName roleName;
+
+    /**
+     * Create default GHMemberChanges instance
+     */
+    public GHMemberChanges() {
+    }
 
     /**
      * Get changes to permission.
@@ -33,68 +98,5 @@ public class GHMemberChanges {
      */
     public FromRoleName getRoleName() {
         return roleName;
-    }
-
-    /**
-     * Changes to permission.
-     */
-    public static class FromToPermission {
-
-        private String from;
-
-        private String to;
-
-        /**
-         * Gets the from.
-         *
-         * @return the from
-         */
-        @WithBridgeMethods(value = GHOrganization.Permission.class, adapterMethod = "stringToOrgPermission")
-        public String getFrom() {
-            return from;
-        }
-
-        /**
-         * Gets the to.
-         *
-         * @return the to
-         */
-        @WithBridgeMethods(value = GHOrganization.Permission.class, adapterMethod = "stringToOrgPermission")
-        public String getTo() {
-            return to;
-        }
-
-        @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Bridge method of getFrom and getTo")
-        private Object stringToOrgPermission(String permissionType, Class type) {
-            switch (permissionType) {
-                case "admin" :
-                    return GHOrganization.Permission.ADMIN;
-                case "none" :
-                    return GHOrganization.Permission.UNKNOWN;
-                case "read" :
-                    return GHOrganization.Permission.PULL;
-                case "write" :
-                    return GHOrganization.Permission.PUSH;
-                default :
-                    return EnumUtils.getNullableEnumOrDefault(GHPermissionType.class, to, GHPermissionType.UNKNOWN);
-            }
-        }
-    }
-
-    /**
-     * Changes to role name.
-     */
-    public static class FromRoleName {
-
-        private String to;
-
-        /**
-         * Gets the to.
-         *
-         * @return the to
-         */
-        public String getTo() {
-            return to;
-        }
     }
 }

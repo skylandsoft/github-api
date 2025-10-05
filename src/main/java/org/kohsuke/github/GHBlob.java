@@ -16,16 +16,32 @@ import java.util.Base64;
  * @see <a href="https://developer.github.com/v3/git/blobs/#get-a-blob">Get a blob</a>
  */
 public class GHBlob {
+
     private String content, encoding, url, sha;
+
     private long size;
+    /**
+     * Create default GHBlob instance
+     */
+    public GHBlob() {
+    }
 
     /**
-     * Gets url.
+     * Gets content.
      *
-     * @return API URL of this blob.
+     * @return Encoded content. You probably want {@link #read()}
      */
-    public URL getUrl() {
-        return GitHubClient.parseURL(url);
+    public String getContent() {
+        return content;
+    }
+
+    /**
+     * Gets encoding.
+     *
+     * @return the encoding
+     */
+    public String getEncoding() {
+        return encoding;
     }
 
     /**
@@ -47,21 +63,12 @@ public class GHBlob {
     }
 
     /**
-     * Gets encoding.
+     * Gets url.
      *
-     * @return the encoding
+     * @return API URL of this blob.
      */
-    public String getEncoding() {
-        return encoding;
-    }
-
-    /**
-     * Gets content.
-     *
-     * @return Encoded content. You probably want {@link #read()}
-     */
-    public String getContent() {
-        return content;
+    public URL getUrl() {
+        return GitHubClient.parseURL(url);
     }
 
     /**

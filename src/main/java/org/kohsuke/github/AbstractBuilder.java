@@ -1,11 +1,12 @@
 package org.kohsuke.github;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-// TODO: Auto-generated Javadoc
 /**
  * An abstract data object builder/updater.
  *
@@ -26,29 +27,29 @@ import javax.annotation.Nonnull;
  * set().otherName(value);
  * </pre>
  * <p>
- * If {@link S} is the same as {@link R}, {@link #with(String, Object)} will commit changes after the first value change
- * and return a {@link R} from {@link #done()}.
+ * If {@code S} is the same as {@code R}, {@link #with(String, Object)} will commit changes after the first value change
+ * and return a {@code R} from {@link #done()}.
  * </p>
  * <p>
- * If {@link S} is not the same as {@link R}, {@link #with(String, Object)} will batch together multiple changes and let
+ * If {@code S} is not the same as {@code R}, {@link #with(String, Object)} will batch together multiple changes and let
  * the user call {@link #done()} when they are ready.
  *
  * @author Liam Newman
  * @param <R>
  *            Final return type built by this builder returned when {@link #done()}} is called.
  * @param <S>
- *            Intermediate return type for this builder returned by calls to {@link #with(String, Object)}. If {@link S}
- *            the same as {@link R}, this builder will commit changes after each call to {@link #with(String, Object)}.
+ *            Intermediate return type for this builder returned by calls to {@link #with(String, Object)}. If {@code S}
+ *            the same as {@code R}, this builder will commit changes after each call to {@link #with(String, Object)}.
  */
-abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
-
-    @Nonnull
-    private final Class<R> returnType;
-
-    private final boolean commitChangesImmediately;
+abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject implements GitHubRequestBuilderDone<R> {
 
     @CheckForNull
     private final R baseInstance;
+
+    private final boolean commitChangesImmediately;
+
+    @Nonnull
+    private final Class<R> returnType;
 
     /** The requester. */
     @Nonnull
@@ -56,9 +57,9 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
 
     // TODO: Not sure how update-in-place behavior should be controlled
     // However, it certainly can be controlled dynamically down to the instance level or inherited for all children of
-    // some
+    // some connection.
+
     /** The update in place. */
-    // connection.
     protected boolean updateInPlace;
 
     /**
@@ -67,7 +68,7 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
      * @param finalReturnType
      *            the final return type for built by this builder returned when {@link #done()}} is called.
      * @param intermediateReturnType
-     *            the intermediate return type of type {@link S} returned by calls to {@link #with(String, Object)}.
+     *            the intermediate return type of type {@code S} returned by calls to {@link #with(String, Object)}.
      *            Must either be equal to {@code builtReturnType} or this instance must be castable to this class. If
      *            not, the constructor will throw {@link IllegalArgumentException}.
      * @param root
@@ -75,6 +76,7 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
      * @param baseInstance
      *            optional instance on which to base this builder.
      */
+    @SuppressFBWarnings(value = { "CT_CONSTRUCTOR_THROW" }, justification = "argument validation, internal class")
     protected AbstractBuilder(@Nonnull Class<R> finalReturnType,
             @Nonnull Class<S> intermediateReturnType,
             @Nonnull GitHub root,
@@ -93,14 +95,9 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
     }
 
     /**
-     * Finishes an update, committing changes.
-     *
-     * This method may update-in-place or not. Either way it returns the resulting instance.
-     *
-     * @return an instance with updated current data
-     * @throws IOException
-     *             if there is an I/O Exception
+     * {@inheritDoc}
      */
+    @Override
     @Nonnull
     @BetaApi
     public R done() throws IOException {
@@ -114,36 +111,12 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
     }
 
     /**
-     * Applies a value to a name for this builder.
-     *
-     * If {@link S} is the same as {@link R}, this method will commit changes after the first value change and return a
-     * {@link R} from {@link #done()}.
-     *
-     * If {@link S} is not the same as {@link R}, this method will return an {@link S} and letting the caller batch
-     * together multiple changes and call {@link #done()} when they are ready.
-     *
-     * @param name
-     *            the name of the field
-     * @param value
-     *            the value of the field
-     * @return either a continuing builder or an updated data record
-     * @throws IOException
-     *             if an I/O error occurs
-     */
-    @Nonnull
-    @BetaApi
-    protected S with(@Nonnull String name, Object value) throws IOException {
-        requester.with(name, value);
-        return continueOrDone();
-    }
-
-    /**
      * Chooses whether to return a continuing builder or an updated data record
      *
-     * If {@link S} is the same as {@link R}, this method will commit changes after the first value change and return a
-     * {@link R} from {@link #done()}.
+     * If {@code S} is the same as {@code R}, this method will commit changes after the first value change and return a
+     * {@code R} from {@link #done()}.
      *
-     * If {@link S} is not the same as {@link R}, this method will return an {@link S} and letting the caller batch
+     * If {@code S} is not the same as {@code R}, this method will return an {@code S} and letting the caller batch
      * together multiple changes and call {@link #done()} when they are ready.
      *
      * @return either a continuing builder or an updated data record
@@ -163,5 +136,29 @@ abstract class AbstractBuilder<R, S> extends GitHubInteractiveObject {
         } else {
             return (S) this;
         }
+    }
+
+    /**
+     * Applies a value to a name for this builder.
+     *
+     * If {@code S} is the same as {@code R}, this method will commit changes after the first value change and return a
+     * {@code R} from {@link #done()}.
+     *
+     * If {@code S} is not the same as {@code R}, this method will return an {@code S} and letting the caller batch
+     * together multiple changes and call {@link #done()} when they are ready.
+     *
+     * @param name
+     *            the name of the field
+     * @param value
+     *            the value of the field
+     * @return either a continuing builder or an updated data record
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    @Nonnull
+    @BetaApi
+    protected S with(@Nonnull String name, Object value) throws IOException {
+        requester.with(name, value);
+        return continueOrDone();
     }
 }

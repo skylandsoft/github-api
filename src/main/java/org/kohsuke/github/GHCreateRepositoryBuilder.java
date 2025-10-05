@@ -3,8 +3,6 @@ package org.kohsuke.github;
 import java.io.IOException;
 import java.util.Objects;
 
-import static org.kohsuke.github.internal.Previews.BAPTISTE;
-
 // TODO: Auto-generated Javadoc
 /**
  * Creates a repository.
@@ -35,6 +33,59 @@ public class GHCreateRepositoryBuilder extends GHRepositoryBuilder<GHCreateRepos
     }
 
     /**
+     * If true, create an initial commit with empty README.
+     *
+     * @param enabled
+     *            true if enabled
+     * @return a builder to continue with building
+     * @throws IOException
+     *             In case of any networking error or error from the server.
+     */
+    public GHCreateRepositoryBuilder autoInit(boolean enabled) throws IOException {
+        return with("auto_init", enabled);
+    }
+
+    /**
+     * Creates a repository with all the parameters.
+     *
+     * @return the gh repository
+     * @throws IOException
+     *             if repository cannot be created
+     */
+    public GHRepository create() throws IOException {
+        return done();
+    }
+
+    /**
+     * Create repository from template repository.
+     *
+     * @param templateRepository
+     *            the template repository as a GHRepository
+     * @return a builder to continue with building
+     */
+    public GHCreateRepositoryBuilder fromTemplateRepository(GHRepository templateRepository) {
+        Objects.requireNonNull(templateRepository, "templateRepository cannot be null");
+        if (!templateRepository.isTemplate()) {
+            throw new IllegalArgumentException("The provided repository is not a template repository.");
+        }
+        return fromTemplateRepository(templateRepository.getOwnerName(), templateRepository.getName());
+    }
+
+    /**
+     * Create repository from template repository.
+     *
+     * @param templateOwner
+     *            template repository owner
+     * @param templateRepo
+     *            template repository
+     * @return a builder to continue with building
+     */
+    public GHCreateRepositoryBuilder fromTemplateRepository(String templateOwner, String templateRepo) {
+        requester.withUrlPath("/repos/" + templateOwner + "/" + templateRepo + "/generate");
+        return this;
+    }
+
+    /**
      * Creates a default .gitignore
      *
      * @param language
@@ -45,6 +96,19 @@ public class GHCreateRepositoryBuilder extends GHRepositoryBuilder<GHCreateRepos
      */
     public GHCreateRepositoryBuilder gitignoreTemplate(String language) throws IOException {
         return with("gitignore_template", language);
+    }
+
+    /**
+     * Include all branches when creating from a template repository
+     *
+     * @param includeAllBranches
+     *            whether or not to include all branches from the template repository
+     * @return a builder to continue with building
+     * @throws IOException
+     *             In case of any networking error or error from the server.
+     */
+    public GHCreateRepositoryBuilder includeAllBranches(boolean includeAllBranches) throws IOException {
+        return with("include_all_branches", includeAllBranches);
     }
 
     /**
@@ -61,16 +125,16 @@ public class GHCreateRepositoryBuilder extends GHRepositoryBuilder<GHCreateRepos
     }
 
     /**
-     * If true, create an initial commit with empty README.
+     * Specifies the ownership of the repository.
      *
-     * @param enabled
-     *            true if enabled
+     * @param owner
+     *            organization or personage
      * @return a builder to continue with building
      * @throws IOException
      *             In case of any networking error or error from the server.
      */
-    public GHCreateRepositoryBuilder autoInit(boolean enabled) throws IOException {
-        return with("auto_init", enabled);
+    public GHCreateRepositoryBuilder owner(String owner) throws IOException {
+        return with("owner", owner);
     }
 
     /**
@@ -86,77 +150,5 @@ public class GHCreateRepositoryBuilder extends GHRepositoryBuilder<GHCreateRepos
         if (team != null)
             return with("team_id", team.getId());
         return this;
-    }
-
-    /**
-     * Specifies whether the repository is a template.
-     *
-     * @param enabled
-     *            true if enabled
-     * @return a builder to continue with building
-     * @throws IOException
-     *             In case of any networking error or error from the server.
-     * @deprecated Use {@link #isTemplate(boolean)} method instead
-     */
-    @Deprecated
-    public GHCreateRepositoryBuilder templateRepository(boolean enabled) throws IOException {
-        return isTemplate(enabled);
-    }
-
-    /**
-     * Specifies the ownership of the repository.
-     *
-     * @param owner
-     *            organization or personage
-     * @return a builder to continue with building
-     * @throws IOException
-     *             In case of any networking error or error from the server.
-     */
-    public GHCreateRepositoryBuilder owner(String owner) throws IOException {
-        return with("owner", owner);
-    }
-
-    /**
-     * Create repository from template repository.
-     *
-     * @param templateOwner
-     *            template repository owner
-     * @param templateRepo
-     *            template repository
-     * @return a builder to continue with building
-     * @see <a href="https://developer.github.com/v3/previews/">GitHub API Previews</a>
-     */
-    @Preview(BAPTISTE)
-    public GHCreateRepositoryBuilder fromTemplateRepository(String templateOwner, String templateRepo) {
-        requester.withPreview(BAPTISTE).withUrlPath("/repos/" + templateOwner + "/" + templateRepo + "/generate");
-        return this;
-    }
-
-    /**
-     * Create repository from template repository.
-     *
-     * @param templateRepository
-     *            the template repository as a GHRepository
-     * @return a builder to continue with building
-     * @see <a href="https://developer.github.com/v3/previews/">GitHub API Previews</a>
-     */
-    @Preview(BAPTISTE)
-    public GHCreateRepositoryBuilder fromTemplateRepository(GHRepository templateRepository) {
-        Objects.requireNonNull(templateRepository, "templateRepository cannot be null");
-        if (!templateRepository.isTemplate()) {
-            throw new IllegalArgumentException("The provided repository is not a template repository.");
-        }
-        return fromTemplateRepository(templateRepository.getOwnerName(), templateRepository.getName());
-    }
-
-    /**
-     * Creates a repository with all the parameters.
-     *
-     * @return the gh repository
-     * @throws IOException
-     *             if repository cannot be created
-     */
-    public GHRepository create() throws IOException {
-        return done();
     }
 }

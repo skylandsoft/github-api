@@ -1,17 +1,16 @@
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import static org.kohsuke.github.internal.Previews.ANTIOPE;
-import static org.kohsuke.github.internal.Previews.GROOT;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -24,9 +23,145 @@ import static org.kohsuke.github.internal.Previews.GROOT;
 @SuppressFBWarnings(value = { "NP_UNWRITTEN_FIELD", "UWF_UNWRITTEN_FIELD" }, justification = "JSON API")
 public class GHCommit {
 
-    private GHRepository owner;
+    /**
+     * A file that was modified.
+     */
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "It's being initialized by JSON deserialization")
+    public static class File {
 
-    private ShortInfo commit;
+        /** The deletions. */
+        int changes, additions, deletions;
+
+        /** The previous filename. */
+        String filename, previousFilename;
+
+        /** The patch. */
+        String rawUrl, blobUrl, sha, patch;
+
+        /** The status. */
+        String status;
+
+        /**
+         * Create default File instance
+         */
+        public File() {
+        }
+
+        /**
+         * Gets blob url.
+         *
+         * @return URL like
+         *         'https://github.com/jenkinsci/jenkins/blob/1182e2ebb1734d0653142bd422ad33c21437f7cf/core/pom.xml'
+         *         that resolves to the HTML page that describes this file.
+         */
+        public URL getBlobUrl() {
+            return GitHubClient.parseURL(blobUrl);
+        }
+
+        /**
+         * Gets file name.
+         *
+         * @return Full path in the repository.
+         */
+        @SuppressFBWarnings(value = "NM_CONFUSING",
+                justification = "It's a part of the library's API and cannot be renamed")
+        public String getFileName() {
+            return filename;
+        }
+
+        /**
+         * Gets lines added.
+         *
+         * @return Number of lines added.
+         */
+        public int getLinesAdded() {
+            return additions;
+        }
+
+        /**
+         * Gets lines changed.
+         *
+         * @return Number of lines added + removed.
+         */
+        public int getLinesChanged() {
+            return changes;
+        }
+
+        /**
+         * Gets lines deleted.
+         *
+         * @return Number of lines removed.
+         */
+        public int getLinesDeleted() {
+            return deletions;
+        }
+
+        /**
+         * Gets patch.
+         *
+         * @return The actual change.
+         */
+        public String getPatch() {
+            return patch;
+        }
+
+        /**
+         * Gets previous filename.
+         *
+         * @return Previous path, in case file has moved.
+         */
+        public String getPreviousFilename() {
+            return previousFilename;
+        }
+
+        /**
+         * Gets raw url.
+         *
+         * @return URL like
+         *         'https://raw.github.com/jenkinsci/jenkins/4eb17c197dfdcf8ef7ff87eb160f24f6a20b7f0e/core/pom.xml' that
+         *         resolves to the actual content of the file.
+         */
+        public URL getRawUrl() {
+            return GitHubClient.parseURL(rawUrl);
+        }
+
+        /**
+         * Gets sha.
+         *
+         * @return [0 -9a-f]{40} SHA1 checksum.
+         */
+        public String getSha() {
+            return sha;
+        }
+
+        /**
+         * Gets status.
+         *
+         * @return "modified", "added", or "removed"
+         */
+        public String getStatus() {
+            return status;
+        }
+    }
+
+    /**
+     * The type Parent.
+     */
+    public static class Parent {
+
+        /** The sha. */
+        String sha;
+
+        /** The url. */
+        @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "We don't provide it in API now")
+        String url;
+
+        /**
+         * Create default Parent instance
+         */
+        public Parent() {
+        }
+    }
 
     /**
      * Short summary of this commit.
@@ -37,28 +172,14 @@ public class GHCommit {
             justification = "JSON API")
     public static class ShortInfo extends GitCommit {
 
-        private int comment_count = -1;
-
-        /**
-         * Gets comment count.
-         *
-         * @return the comment count
-         * @throws GHException
-         *             the GH exception
-         */
-        public int getCommentCount() throws GHException {
-            if (comment_count < 0) {
-                throw new GHException("Not available on this endpoint.");
-            }
-            return comment_count;
-        }
+        private int commentCount = -1;
 
         /**
          * Creates instance of {@link GHCommit.ShortInfo}.
          */
         public ShortInfo() {
             // Empty constructor required for Jackson binding
-        };
+        }
 
         /**
          * Instantiates a new short info.
@@ -70,6 +191,20 @@ public class GHCommit {
             // Inherited copy constructor, used for bridge method from {@link GitCommit},
             // which is used in {@link GHContentUpdateResponse}) to {@link GHCommit}.
             super(commit);
+        };
+
+        /**
+         * Gets comment count.
+         *
+         * @return the comment count
+         * @throws GHException
+         *             the GH exception
+         */
+        public int getCommentCount() throws GHException {
+            if (commentCount < 0) {
+                throw new GHException("Not available on this endpoint.");
+            }
+            return commentCount;
         }
 
         /**
@@ -89,177 +224,24 @@ public class GHCommit {
     }
 
     /**
-     * The type GHAuthor.
-     *
-     * @deprecated Use {@link GitUser} instead.
-     */
-    @Deprecated
-    public static class GHAuthor extends GitUser {
-
-        /**
-         * Instantiates a new GH author.
-         */
-        public GHAuthor() {
-            super();
-        }
-
-        /**
-         * Instantiates a new GH author.
-         *
-         * @param user
-         *            the user
-         */
-        public GHAuthor(GitUser user) {
-            super(user);
-        }
-    }
-
-    /**
      * The type Stats.
      */
     public static class Stats {
 
         /** The deletions. */
         int total, additions, deletions;
-    }
-
-    /**
-     * A file that was modified.
-     */
-    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "It's being initialized by JSON deserialization")
-    public static class File {
-
-        /** The status. */
-        String status;
-
-        /** The deletions. */
-        int changes, additions, deletions;
-
-        /** The patch. */
-        String raw_url, blob_url, sha, patch;
-
-        /** The previous filename. */
-        String filename, previous_filename;
 
         /**
-         * Gets lines changed.
-         *
-         * @return Number of lines added + removed.
+         * Create default Stats instance
          */
-        public int getLinesChanged() {
-            return changes;
+        public Stats() {
         }
-
-        /**
-         * Gets lines added.
-         *
-         * @return Number of lines added.
-         */
-        public int getLinesAdded() {
-            return additions;
-        }
-
-        /**
-         * Gets lines deleted.
-         *
-         * @return Number of lines removed.
-         */
-        public int getLinesDeleted() {
-            return deletions;
-        }
-
-        /**
-         * Gets status.
-         *
-         * @return "modified", "added", or "removed"
-         */
-        public String getStatus() {
-            return status;
-        }
-
-        /**
-         * Gets file name.
-         *
-         * @return Full path in the repository.
-         */
-        @SuppressFBWarnings(value = "NM_CONFUSING",
-                justification = "It's a part of the library's API and cannot be renamed")
-        public String getFileName() {
-            return filename;
-        }
-
-        /**
-         * Gets previous filename.
-         *
-         * @return Previous path, in case file has moved.
-         */
-        public String getPreviousFilename() {
-            return previous_filename;
-        }
-
-        /**
-         * Gets patch.
-         *
-         * @return The actual change.
-         */
-        public String getPatch() {
-            return patch;
-        }
-
-        /**
-         * Gets raw url.
-         *
-         * @return URL like
-         *         'https://raw.github.com/jenkinsci/jenkins/4eb17c197dfdcf8ef7ff87eb160f24f6a20b7f0e/core/pom.xml' that
-         *         resolves to the actual content of the file.
-         */
-        public URL getRawUrl() {
-            return GitHubClient.parseURL(raw_url);
-        }
-
-        /**
-         * Gets blob url.
-         *
-         * @return URL like
-         *         'https://github.com/jenkinsci/jenkins/blob/1182e2ebb1734d0653142bd422ad33c21437f7cf/core/pom.xml'
-         *         that resolves to the HTML page that describes this file.
-         */
-        public URL getBlobUrl() {
-            return GitHubClient.parseURL(blob_url);
-        }
-
-        /**
-         * Gets sha.
-         *
-         * @return [0 -9a-f]{40} SHA1 checksum.
-         */
-        public String getSha() {
-            return sha;
-        }
-    }
-
-    /**
-     * The type Parent.
-     */
-    public static class Parent {
-
-        /** The url. */
-        @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "We don't provide it in API now")
-        String url;
-
-        /** The sha. */
-        String sha;
     }
 
     /**
      * The Class User.
      */
     public static class User {
-
-        /** The gravatar id. */
-        // TODO: what if someone who doesn't have an account on GitHub makes a commit?
-        @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "We don't provide it in API now")
-        String url, avatar_url, gravatar_id;
 
         /** The id. */
         @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "We don't provide it in API now")
@@ -268,37 +250,50 @@ public class GHCommit {
         /** The login. */
         String login;
 
-        public int getId() {
-            return id;
-        }
+        /** The gravatar id. */
+        // TODO: what if someone who doesn't have an account on GitHub makes a commit?
+        @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "We don't provide it in API now")
+        String url, avatarUrl, gravatarId;
 
         public String getAvatarUrl() {
-            return avatar_url;
+            return avatarUrl;
         }
 
         public String getGravatarId() {
-            return gravatar_id;
+            return gravatarId;
+        }
+
+        public int getId() {
+            return id;
         }
 
         public String getLogin() {
             return login;
         }
+
+        public String getUrl() {
+            return url;
+        }
     }
 
-    /** The sha. */
-    String url, html_url, sha, message;
+    private ShortInfo commit;
+
+    private GHRepository owner;
+
+    /** The committer. */
+    User author, committer;
 
     /** The files. */
     List<File> files;
 
-    /** The stats. */
-    Stats stats;
-
     /** The parents. */
     List<Parent> parents;
 
-    /** The committer. */
-    User author, committer;
+    /** The stats. */
+    Stats stats;
+
+    /** The sha. */
+    String url, htmlUrl, sha, message;
 
     /**
      * Creates an instance of {@link GHCommit}.
@@ -321,11 +316,113 @@ public class GHCommit {
         commit = shortInfo;
 
         owner = commit.getOwner();
-        html_url = commit.getHtmlUrl();
+        htmlUrl = commit.getHtmlUrl();
         sha = commit.getSha();
         url = commit.getUrl();
         parents = commit.getParents();
         message = commit.getMessage();
+    }
+
+    /**
+     * Create comment gh commit comment.
+     *
+     * @param body
+     *            the body
+     * @return the gh commit comment
+     * @throws IOException
+     *             the io exception
+     */
+    public GHCommitComment createComment(String body) throws IOException {
+        return createComment(body, null, null, null);
+    }
+
+    /**
+     * Creates a commit comment.
+     * <p>
+     * I'm not sure how path/line/position parameters interact with each other.
+     *
+     * @param body
+     *            body of the comment
+     * @param path
+     *            path of file being commented on
+     * @param line
+     *            target line for comment
+     * @param position
+     *            position on line
+     * @return created GHCommitComment
+     * @throws IOException
+     *             if comment is not created
+     */
+    public GHCommitComment createComment(String body, String path, Integer line, Integer position) throws IOException {
+        GHCommitComment r = owner.root()
+                .createRequest()
+                .method("POST")
+                .with("body", body)
+                .with("path", path)
+                .with("line", line)
+                .with("position", position)
+                .withUrlPath(
+                        String.format("/repos/%s/%s/commits/%s/comments", owner.getOwnerName(), owner.getName(), sha))
+                .fetch(GHCommitComment.class);
+        return r.wrap(owner);
+    }
+
+    /**
+     * Gets author.
+     *
+     * @return the author
+     * @throws IOException
+     *             the io exception
+     */
+    public GHUser getAuthor() throws IOException {
+        populate();
+        return resolveUser(author);
+    }
+
+    /**
+     * Gets author with no user information populated.
+     *
+     * @return the committer
+     * @throws IOException
+     *             the io exception
+     */
+    public GHCommit.User getAuthorRaw() throws IOException {
+        return author;
+    }
+
+    /**
+     * Gets the date the change was authored on.
+     *
+     * @return the date the change was authored on.
+     * @throws IOException
+     *             if the information was not already fetched and an attempt at fetching the information failed.
+     */
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getAuthoredDate() throws IOException {
+        return getCommitShortInfo().getAuthoredDate();
+    }
+
+    /**
+     * Gets check-runs for given sha.
+     *
+     * @return check runs for given sha.
+     * @throws IOException
+     *             on error
+     */
+    public PagedIterable<GHCheckRun> getCheckRuns() throws IOException {
+        return owner.getCheckRuns(sha);
+    }
+
+    /**
+     * Gets the date the change was committed on.
+     *
+     * @return the date the change was committed on.
+     * @throws IOException
+     *             if the information was not already fetched and an attempt at fetching the information failed.
+     */
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getCommitDate() throws IOException {
+        return getCommitShortInfo().getCommitDate();
     }
 
     /**
@@ -342,25 +439,47 @@ public class GHCommit {
     }
 
     /**
-     * Gets owner.
+     * Gets committer.
      *
-     * @return the repository that contains the commit.
+     * @return the committer
+     * @throws IOException
+     *             the io exception
      */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHRepository getOwner() {
-        return owner;
+    public GHUser getCommitter() throws IOException {
+        populate();
+        return resolveUser(committer);
     }
 
     /**
-     * Gets lines changed.
+     * Gets committer with no user information populated.
      *
-     * @return the number of lines added + removed.
+     * @return the committer
      * @throws IOException
-     *             if the field was not populated and refresh fails
+     *             the io exception
      */
-    public int getLinesChanged() throws IOException {
-        populate();
-        return stats.total;
+    public GHCommit.User getCommitterRaw() throws IOException {
+        return committer;
+    }
+
+    /**
+     * Gets html url.
+     *
+     * @return URL of this commit like
+     *         "https://github.com/kohsuke/sandbox-ant/commit/8ae38db0ea5837313ab5f39d43a6f73de3bd9000"
+     */
+    public URL getHtmlUrl() {
+        return GitHubClient.parseURL(htmlUrl);
+    }
+
+    /**
+     * Gets last status.
+     *
+     * @return the last status of this commit, which is what gets shown in the UI.
+     * @throws IOException
+     *             on error
+     */
+    public GHCommitStatus getLastStatus() throws IOException {
+        return owner.getLastCommitStatus(sha);
     }
 
     /**
@@ -376,6 +495,18 @@ public class GHCommit {
     }
 
     /**
+     * Gets lines changed.
+     *
+     * @return the number of lines added + removed.
+     * @throws IOException
+     *             if the field was not populated and refresh fails
+     */
+    public int getLinesChanged() throws IOException {
+        populate();
+        return stats.total;
+    }
+
+    /**
      * Gets lines deleted.
      *
      * @return Number of lines removed.
@@ -388,72 +519,13 @@ public class GHCommit {
     }
 
     /**
-     * Use this method to walk the tree.
+     * Gets owner.
      *
-     * @return a GHTree to walk
-     * @throws IOException
-     *             on error
+     * @return the repository that contains the commit.
      */
-    public GHTree getTree() throws IOException {
-        return owner.getTree(getCommitShortInfo().getTreeSHA1());
-    }
-
-    /**
-     * Gets html url.
-     *
-     * @return URL of this commit like
-     *         "https://github.com/kohsuke/sandbox-ant/commit/8ae38db0ea5837313ab5f39d43a6f73de3bd9000"
-     */
-    public URL getHtmlUrl() {
-        return GitHubClient.parseURL(html_url);
-    }
-
-    /**
-     * Gets sha 1.
-     *
-     * @return [0 -9a-f]{40} SHA1 checksum.
-     */
-    public String getSHA1() {
-        return sha;
-    }
-
-    /**
-     * Gets url.
-     *
-     * @return API URL of this object.
-     */
-    public URL getUrl() {
-        return GitHubClient.parseURL(url);
-    }
-
-    /**
-     * List of files changed/added/removed in this commit.
-     *
-     * @return Can be empty but never null.
-     * @throws IOException
-     *             on error
-     * @deprecated Use {@link #listFiles()} instead.
-     */
-    @Deprecated
-    public List<File> getFiles() throws IOException {
-        return listFiles().toList();
-    }
-
-    /**
-     * List of files changed/added/removed in this commit. Uses a paginated list if the files returned by GitHub exceed
-     * 300 in quantity.
-     *
-     * @return the List of files
-     * @see <a href="https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit">Get a
-     *      commit</a>
-     * @throws IOException
-     *             on error
-     */
-    public PagedIterable<File> listFiles() throws IOException {
-
-        populate();
-
-        return new GHCommitFileIterable(owner, sha, files);
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHRepository getOwner() {
+        return owner;
     }
 
     /**
@@ -493,105 +565,42 @@ public class GHCommit {
     }
 
     /**
-     * Gets author.
+     * Gets sha 1.
      *
-     * @return the author
-     * @throws IOException
-     *             the io exception
+     * @return [0 -9a-f]{40} SHA1 checksum.
      */
-    public GHUser getAuthor() throws IOException {
-        populate();
-        return resolveUser(author);
+    public String getSHA1() {
+        return sha;
     }
 
     /**
-     * Gets author with no user information populated.
+     * Use this method to walk the tree.
      *
-     * @return the committer
+     * @return a GHTree to walk
      * @throws IOException
-     *             the io exception
+     *             on error
      */
-    public GHCommit.User getAuthorRaw() throws IOException {
-        return author;
+    public GHTree getTree() throws IOException {
+        return owner.getTree(getCommitShortInfo().getTreeSHA1());
     }
 
     /**
-     * Gets the date the change was authored on.
+     * Gets the URL
      *
-     * @return the date the change was authored on.
-     * @throws IOException
-     *             if the information was not already fetched and an attempt at fetching the information failed.
+     * @return the URL
      */
-    public Date getAuthoredDate() throws IOException {
-        return getCommitShortInfo().getAuthoredDate();
-    }
-
-    /**
-     * Gets committer.
-     *
-     * @return the committer
-     * @throws IOException
-     *             the io exception
-     */
-    public GHUser getCommitter() throws IOException {
-        populate();
-        return resolveUser(committer);
-    }
-
-    /**
-     * Gets committer with no user information populated.
-     *
-     * @return the committer
-     * @throws IOException
-     *             the io exception
-     */
-    public GHCommit.User getCommitterRaw() throws IOException {
-        return committer;
-    }
-
-    /**
-     * Gets the date the change was committed on.
-     *
-     * @return the date the change was committed on.
-     * @throws IOException
-     *             if the information was not already fetched and an attempt at fetching the information failed.
-     */
-    public Date getCommitDate() throws IOException {
-        return getCommitShortInfo().getCommitDate();
-    }
-
-    private GHUser resolveUser(User author) throws IOException {
-        if (author == null || author.login == null)
-            return null;
-        return owner.root().getUser(author.login);
-    }
-
-    /**
-     * Retrieves a list of pull requests which contain this commit.
-     *
-     * @return {@link PagedIterable} with the pull requests which contain this commit
-     */
-    @Preview(GROOT)
-    public PagedIterable<GHPullRequest> listPullRequests() {
-        return owner.root()
-                .createRequest()
-                .withPreview(GROOT)
-                .withUrlPath(String.format("/repos/%s/%s/commits/%s/pulls", owner.getOwnerName(), owner.getName(), sha))
-                .toIterable(GHPullRequest[].class, item -> item.wrapUp(owner));
+    public URL getUrl() {
+        return GitHubClient.parseURL(url);
     }
 
     /**
      * Retrieves a list of branches where this commit is the head commit.
      *
      * @return {@link PagedIterable} with the branches where the commit is the head commit
-     * @throws IOException
-     *             the io exception
      */
-    @Preview(GROOT)
-    public PagedIterable<GHBranch> listBranchesWhereHead() throws IOException {
+    public PagedIterable<GHBranch> listBranchesWhereHead() {
         return owner.root()
                 .createRequest()
-                .withPreview(GROOT)
                 .withUrlPath(String.format("/repos/%s/%s/commits/%s/branches-where-head",
                         owner.getOwnerName(),
                         owner.getName(),
@@ -609,47 +618,32 @@ public class GHCommit {
     }
 
     /**
-     * Creates a commit comment.
-     * <p>
-     * I'm not sure how path/line/position parameters interact with each other.
+     * List of files changed/added/removed in this commit. Uses a paginated list if the files returned by GitHub exceed
+     * 300 in quantity.
      *
-     * @param body
-     *            body of the comment
-     * @param path
-     *            path of file being commented on
-     * @param line
-     *            target line for comment
-     * @param position
-     *            position on line
-     * @return created GHCommitComment
+     * @return the List of files
+     * @see <a href="https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit">Get a
+     *      commit</a>
      * @throws IOException
-     *             if comment is not created
+     *             on error
      */
-    public GHCommitComment createComment(String body, String path, Integer line, Integer position) throws IOException {
-        GHCommitComment r = owner.root()
-                .createRequest()
-                .method("POST")
-                .with("body", body)
-                .with("path", path)
-                .with("line", line)
-                .with("position", position)
-                .withUrlPath(
-                        String.format("/repos/%s/%s/commits/%s/comments", owner.getOwnerName(), owner.getName(), sha))
-                .fetch(GHCommitComment.class);
-        return r.wrap(owner);
+    public PagedIterable<File> listFiles() throws IOException {
+
+        populate();
+
+        return new GHCommitFileIterable(owner, sha, files);
     }
 
     /**
-     * Create comment gh commit comment.
+     * Retrieves a list of pull requests which contain this commit.
      *
-     * @param body
-     *            the body
-     * @return the gh commit comment
-     * @throws IOException
-     *             the io exception
+     * @return {@link PagedIterable} with the pull requests which contain this commit
      */
-    public GHCommitComment createComment(String body) throws IOException {
-        return createComment(body, null, null, null);
+    public PagedIterable<GHPullRequest> listPullRequests() {
+        return owner.root()
+                .createRequest()
+                .withUrlPath(String.format("/repos/%s/%s/commits/%s/pulls", owner.getOwnerName(), owner.getName(), sha))
+                .toIterable(GHPullRequest[].class, item -> item.wrapUp(owner));
     }
 
     /**
@@ -663,27 +657,10 @@ public class GHCommit {
         return owner.listCommitStatuses(sha);
     }
 
-    /**
-     * Gets last status.
-     *
-     * @return the last status of this commit, which is what gets shown in the UI.
-     * @throws IOException
-     *             on error
-     */
-    public GHCommitStatus getLastStatus() throws IOException {
-        return owner.getLastCommitStatus(sha);
-    }
-
-    /**
-     * Gets check-runs for given sha.
-     *
-     * @return check runs for given sha.
-     * @throws IOException
-     *             on error
-     */
-    @Preview(ANTIOPE)
-    public PagedIterable<GHCheckRun> getCheckRuns() throws IOException {
-        return owner.getCheckRuns(sha);
+    private GHUser resolveUser(User author) throws IOException {
+        if (author == null || author.login == null)
+            return null;
+        return owner.root().getUser(author.login);
     }
 
     /**

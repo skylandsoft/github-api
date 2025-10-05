@@ -1,12 +1,16 @@
 package org.kohsuke.github;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 // TODO: Auto-generated Javadoc
 /**
  * Represents the one page of artifacts result when listing artifacts.
  */
+@SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
+        justification = "JSON API")
 class GHArtifactsPage {
-    private int total_count;
     private GHArtifact[] artifacts;
+    private int totalCount;
 
     /**
      * Gets the total count.
@@ -14,7 +18,7 @@ class GHArtifactsPage {
      * @return the total count
      */
     public int getTotalCount() {
-        return total_count;
+        return totalCount;
     }
 
     /**

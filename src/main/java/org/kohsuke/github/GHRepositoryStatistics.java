@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -19,78 +18,108 @@ import java.util.NoSuchElementException;
  */
 public class GHRepositoryStatistics extends GitHubInteractiveObject {
 
-    private final GHRepository repo;
-
-    private static final int MAX_WAIT_ITERATIONS = 3;
-    private static final int WAIT_SLEEP_INTERVAL = 5000;
-
     /**
-     * Instantiates a new Gh repository statistics.
-     *
-     * @param repo
-     *            the repo
+     * The type CodeFrequency.
      */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP2" }, justification = "Acceptable risk")
-    public GHRepositoryStatistics(GHRepository repo) {
-        super(repo.root());
-        this.repo = repo;
-    }
+    public static class CodeFrequency {
 
-    /**
-     * Get contributors list with additions, deletions, and commit count. See
-     * https://developer.github.com/v3/repos/statistics/#get-contributors-list-with-additions-deletions-and-commit-counts
-     *
-     * @return the contributor stats
-     * @throws IOException
-     *             the io exception
-     * @throws InterruptedException
-     *             the interrupted exception
-     */
-    public PagedIterable<ContributorStats> getContributorStats() throws IOException, InterruptedException {
-        return getContributorStats(true);
-    }
+        private final int additions;
+        private final int deletions;
+        private final int week;
 
-    /**
-     * Gets contributor stats.
-     *
-     * @param waitTillReady
-     *            Whether to sleep the thread if necessary until the statistics are ready. This is true by default.
-     * @return the contributor stats
-     * @throws IOException
-     *             the io exception
-     * @throws InterruptedException
-     *             the interrupted exception
-     */
-    @BetaApi
-    @SuppressWarnings("SleepWhileInLoop")
-    @SuppressFBWarnings(value = { "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" }, justification = "JSON API")
-    public PagedIterable<ContributorStats> getContributorStats(boolean waitTillReady)
-            throws IOException, InterruptedException {
-        PagedIterable<GHRepositoryStatistics.ContributorStats> stats = getContributorStatsImpl();
-
-        if (stats == null && waitTillReady) {
-            for (int i = 0; i < MAX_WAIT_ITERATIONS; i += 1) {
-                // Wait a few seconds and try again.
-                Thread.sleep(WAIT_SLEEP_INTERVAL);
-                stats = getContributorStatsImpl();
-                if (stats != null) {
-                    break;
-                }
-            }
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+        private CodeFrequency(List<Integer> item) {
+            week = item.get(0);
+            additions = item.get(1);
+            deletions = item.get(2);
         }
 
-        return stats;
+        /**
+         * Gets additions.
+         *
+         * @return The number of additions for the week.
+         */
+        public long getAdditions() {
+            return additions;
+        }
+
+        /**
+         * Gets deletions.
+         *
+         * @return The number of deletions for the week. NOTE: This will be a NEGATIVE number.
+         */
+        public long getDeletions() {
+            // TODO: Perhaps return Math.abs(deletions),
+            // since most developers may not expect a negative number.
+            return deletions;
+        }
+
+        /**
+         * Gets week timestamp.
+         *
+         * @return The start of the week as a UNIX timestamp.
+         */
+        public int getWeekTimestamp() {
+            return week;
+        }
+
+        /**
+         * To string.
+         *
+         * @return the string
+         */
+        @Override
+        public String toString() {
+            return "Week starting " + getWeekTimestamp() + " has " + getAdditions() + " additions and "
+                    + Math.abs(getDeletions()) + " deletions";
+        }
     }
 
     /**
-     * This gets the actual statistics from the server. Returns null if they are still being cached.
+     * The type CommitActivity.
      */
-    private PagedIterable<ContributorStats> getContributorStatsImpl() throws IOException {
-        return root().createRequest()
-                .withUrlPath(getApiTailUrl("contributors"))
-                .toIterable(ContributorStats[].class, null);
-    }
+    @SuppressFBWarnings(
+            value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
+            justification = "JSON API")
+    public static class CommitActivity extends GHObject {
 
+        private List<Integer> days;
+
+        private int total;
+        private long week;
+        /**
+         * Create default CommitActivity instance
+         */
+        public CommitActivity() {
+        }
+
+        /**
+         * Gets days.
+         *
+         * @return The number of commits for each day of the week. 0 = Sunday, 1 = Monday, etc.
+         */
+        public List<Integer> getDays() {
+            return Collections.unmodifiableList(days);
+        }
+
+        /**
+         * Gets total.
+         *
+         * @return The total number of commits for the week.
+         */
+        public int getTotal() {
+            return total;
+        }
+
+        /**
+         * Gets week.
+         *
+         * @return The start of the week as a UNIX timestamp.
+         */
+        public long getWeek() {
+            return week;
+        }
+    }
     /**
      * The type ContributorStats.
      */
@@ -99,20 +128,82 @@ public class GHRepositoryStatistics extends GitHubInteractiveObject {
                     "URF_UNREAD_FIELD" },
             justification = "JSON API")
     public static class ContributorStats extends GHObject {
+
+        /**
+         * The type Week.
+         */
+        @SuppressFBWarnings(
+                value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD",
+                        "URF_UNREAD_FIELD" },
+                justification = "JSON API")
+        public static class Week {
+
+            private int a;
+
+            private int c;
+            private int d;
+            private long w;
+            /**
+             * Create default Week instance
+             */
+            public Week() {
+            }
+
+            /**
+             * Gets number of additions.
+             *
+             * @return The number of additions for the week.
+             */
+            public int getNumberOfAdditions() {
+                return a;
+            }
+
+            /**
+             * Gets number of commits.
+             *
+             * @return The number of commits for the week.
+             */
+            public int getNumberOfCommits() {
+                return c;
+            }
+
+            /**
+             * Gets number of deletions.
+             *
+             * @return The number of deletions for the week.
+             */
+            public int getNumberOfDeletions() {
+                return d;
+            }
+
+            /**
+             * Gets week timestamp.
+             *
+             * @return Start of the week, as a UNIX timestamp.
+             */
+            public long getWeekTimestamp() {
+                return w;
+            }
+
+            /**
+             * To string.
+             *
+             * @return the string
+             */
+            @Override
+            public String toString() {
+                return String.format("Week starting %d - Additions: %d, Deletions: %d, Commits: %d", w, a, d, c);
+            }
+        }
+
         private GHUser author;
         private int total;
         private List<Week> weeks;
 
         /**
-         * Gets the html url.
-         *
-         * @return the html url
-         * @throws IOException
-         *             Signals that an I/O exception has occurred.
+         * Create default ContributorStats instance
          */
-        @Override
-        public URL getHtmlUrl() throws IOException {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public ContributorStats() {
         }
 
         /**
@@ -174,243 +265,20 @@ public class GHRepositoryStatistics extends GitHubInteractiveObject {
             return author.getLogin() + " made " + String.valueOf(total) + " contributions over "
                     + String.valueOf(weeks.size()) + " weeks";
         }
-
-        /**
-         * The type Week.
-         */
-        @SuppressFBWarnings(
-                value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD",
-                        "URF_UNREAD_FIELD" },
-                justification = "JSON API")
-        public static class Week {
-
-            private long w;
-            private int a;
-            private int d;
-            private int c;
-
-            /**
-             * Gets week timestamp.
-             *
-             * @return Start of the week, as a UNIX timestamp.
-             */
-            public long getWeekTimestamp() {
-                return w;
-            }
-
-            /**
-             * Gets number of additions.
-             *
-             * @return The number of additions for the week.
-             */
-            public int getNumberOfAdditions() {
-                return a;
-            }
-
-            /**
-             * Gets number of deletions.
-             *
-             * @return The number of deletions for the week.
-             */
-            public int getNumberOfDeletions() {
-                return d;
-            }
-
-            /**
-             * Gets number of commits.
-             *
-             * @return The number of commits for the week.
-             */
-            public int getNumberOfCommits() {
-                return c;
-            }
-
-            /**
-             * To string.
-             *
-             * @return the string
-             */
-            @Override
-            public String toString() {
-                return String.format("Week starting %d - Additions: %d, Deletions: %d, Commits: %d", w, a, d, c);
-            }
-        }
-    }
-
-    /**
-     * Get the last year of commit activity data. See
-     * https://developer.github.com/v3/repos/statistics/#get-the-last-year-of-commit-activity-data
-     *
-     * @return the commit activity
-     * @throws IOException
-     *             the io exception
-     */
-    public PagedIterable<CommitActivity> getCommitActivity() throws IOException {
-        return root().createRequest()
-                .withUrlPath(getApiTailUrl("commit_activity"))
-                .toIterable(CommitActivity[].class, null);
-    }
-
-    /**
-     * The type CommitActivity.
-     */
-    @SuppressFBWarnings(
-            value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
-            justification = "JSON API")
-    public static class CommitActivity extends GHObject {
-        private List<Integer> days;
-        private int total;
-        private long week;
-
-        /**
-         * Gets days.
-         *
-         * @return The number of commits for each day of the week. 0 = Sunday, 1 = Monday, etc.
-         */
-        public List<Integer> getDays() {
-            return Collections.unmodifiableList(days);
-        }
-
-        /**
-         * Gets total.
-         *
-         * @return The total number of commits for the week.
-         */
-        public int getTotal() {
-            return total;
-        }
-
-        /**
-         * Gets week.
-         *
-         * @return The start of the week as a UNIX timestamp.
-         */
-        public long getWeek() {
-            return week;
-        }
-
-        /**
-         * Gets the html url.
-         *
-         * @return the html url
-         * @throws IOException
-         *             Signals that an I/O exception has occurred.
-         */
-        @Override
-        public URL getHtmlUrl() throws IOException {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-    }
-
-    /**
-     * Get the number of additions and deletions per week. See
-     * https://developer.github.com/v3/repos/statistics/#get-the-number-of-additions-and-deletions-per-week
-     *
-     * @return the code frequency
-     * @throws IOException
-     *             the io exception
-     */
-    public List<CodeFrequency> getCodeFrequency() throws IOException {
-        try {
-            CodeFrequency[] list = root().createRequest()
-                    .withUrlPath(getApiTailUrl("code_frequency"))
-                    .fetch(CodeFrequency[].class);
-
-            return Arrays.asList(list);
-        } catch (MismatchedInputException e) {
-            // This sometimes happens when retrieving code frequency statistics
-            // for a repository for the first time. It is probably still being
-            // generated, so return null.
-            return null;
-        }
-    }
-
-    /**
-     * The type CodeFrequency.
-     */
-    public static class CodeFrequency {
-
-        private final int week;
-        private final int additions;
-        private final int deletions;
-
-        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-        private CodeFrequency(List<Integer> item) {
-            week = item.get(0);
-            additions = item.get(1);
-            deletions = item.get(2);
-        }
-
-        /**
-         * Gets week timestamp.
-         *
-         * @return The start of the week as a UNIX timestamp.
-         */
-        public int getWeekTimestamp() {
-            return week;
-        }
-
-        /**
-         * Gets additions.
-         *
-         * @return The number of additions for the week.
-         */
-        public long getAdditions() {
-            return additions;
-        }
-
-        /**
-         * Gets deletions.
-         *
-         * @return The number of deletions for the week. NOTE: This will be a NEGATIVE number.
-         */
-        public long getDeletions() {
-            // TODO: Perhaps return Math.abs(deletions),
-            // since most developers may not expect a negative number.
-            return deletions;
-        }
-
-        /**
-         * To string.
-         *
-         * @return the string
-         */
-        @Override
-        public String toString() {
-            return "Week starting " + getWeekTimestamp() + " has " + getAdditions() + " additions and "
-                    + Math.abs(getDeletions()) + " deletions";
-        }
-    }
-
-    /**
-     * Get the weekly commit count for the repository owner and everyone else. See
-     * https://developer.github.com/v3/repos/statistics/#get-the-weekly-commit-count-for-the-repository-owner-and-everyone-else
-     *
-     * @return the participation
-     * @throws IOException
-     *             the io exception
-     */
-    public Participation getParticipation() throws IOException {
-        return root().createRequest().withUrlPath(getApiTailUrl("participation")).fetch(Participation.class);
     }
 
     /**
      * The type Participation.
      */
     public static class Participation extends GHObject {
-        private List<Integer> all;
-        private List<Integer> owner;
 
+        private List<Integer> all;
+
+        private List<Integer> owner;
         /**
-         * Gets the html url.
-         *
-         * @return the html url
-         * @throws IOException
-         *             Signals that an I/O exception has occurred.
+         * Create default Participation instance
          */
-        @Override
-        public URL getHtmlUrl() throws IOException {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public Participation() {
         }
 
         /**
@@ -430,21 +298,6 @@ public class GHRepositoryStatistics extends GitHubInteractiveObject {
         public List<Integer> getOwnerCommits() {
             return Collections.unmodifiableList(owner);
         }
-    }
-
-    /**
-     * Get the number of commits per hour in each day. See
-     * https://developer.github.com/v3/repos/statistics/#get-the-number-of-commits-per-hour-in-each-day
-     *
-     * @return the punch card
-     * @throws IOException
-     *             the io exception
-     */
-    public List<PunchCardItem> getPunchCard() throws IOException {
-        PunchCardItem[] list = root().createRequest()
-                .withUrlPath(getApiTailUrl("punch_card"))
-                .fetch(PunchCardItem[].class);
-        return Arrays.asList(list);
     }
 
     /**
@@ -498,6 +351,136 @@ public class GHRepositoryStatistics extends GitHubInteractiveObject {
         public String toString() {
             return "Day " + getDayOfWeek() + " Hour " + getHourOfDay() + ": " + getNumberOfCommits() + " commits";
         }
+    }
+
+    private static final int MAX_WAIT_ITERATIONS = 3;
+
+    private static final int WAIT_SLEEP_INTERVAL = 5000;
+
+    private final GHRepository repo;
+
+    /**
+     * Instantiates a new Gh repository statistics.
+     *
+     * @param repo
+     *            the repo
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP2" }, justification = "Acceptable risk")
+    public GHRepositoryStatistics(GHRepository repo) {
+        super(repo.root());
+        this.repo = repo;
+    }
+
+    /**
+     * Get the number of additions and deletions per week. See
+     * https://developer.github.com/v3/repos/statistics/#get-the-number-of-additions-and-deletions-per-week
+     *
+     * @return the code frequency
+     * @throws IOException
+     *             the io exception
+     */
+    public List<CodeFrequency> getCodeFrequency() throws IOException {
+        try {
+            CodeFrequency[] list = root().createRequest()
+                    .withUrlPath(getApiTailUrl("code_frequency"))
+                    .fetch(CodeFrequency[].class);
+
+            return Arrays.asList(list);
+        } catch (MismatchedInputException e) {
+            // This sometimes happens when retrieving code frequency statistics
+            // for a repository for the first time. It is probably still being
+            // generated, so return null.
+            return null;
+        }
+    }
+
+    /**
+     * Get the last year of commit activity data. See
+     * https://developer.github.com/v3/repos/statistics/#get-the-last-year-of-commit-activity-data
+     *
+     * @return the commit activity
+     */
+    public PagedIterable<CommitActivity> getCommitActivity() {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("commit_activity"))
+                .toIterable(CommitActivity[].class, null);
+    }
+
+    /**
+     * Get contributors list with additions, deletions, and commit count. See
+     * https://developer.github.com/v3/repos/statistics/#get-contributors-list-with-additions-deletions-and-commit-counts
+     *
+     * @return the contributor stats
+     * @throws InterruptedException
+     *             the interrupted exception
+     */
+    public PagedIterable<ContributorStats> getContributorStats() throws InterruptedException {
+        return getContributorStats(true);
+    }
+
+    /**
+     * Gets contributor stats.
+     *
+     * @param waitTillReady
+     *            Whether to sleep the thread if necessary until the statistics are ready. This is true by default.
+     * @return the contributor stats
+     * @throws InterruptedException
+     *             the interrupted exception
+     */
+    @BetaApi
+    @SuppressWarnings("SleepWhileInLoop")
+    @SuppressFBWarnings(value = { "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" }, justification = "JSON API")
+    public PagedIterable<ContributorStats> getContributorStats(boolean waitTillReady) throws InterruptedException {
+        PagedIterable<GHRepositoryStatistics.ContributorStats> stats = getContributorStatsImpl();
+
+        if (stats == null && waitTillReady) {
+            for (int i = 0; i < MAX_WAIT_ITERATIONS; i += 1) {
+                // Wait a few seconds and try again.
+                Thread.sleep(WAIT_SLEEP_INTERVAL);
+                stats = getContributorStatsImpl();
+                if (stats != null) {
+                    break;
+                }
+            }
+        }
+
+        return stats;
+    }
+
+    /**
+     * Get the weekly commit count for the repository owner and everyone else. See
+     * https://developer.github.com/v3/repos/statistics/#get-the-weekly-commit-count-for-the-repository-owner-and-everyone-else
+     *
+     * @return the participation
+     * @throws IOException
+     *             the io exception
+     */
+    public Participation getParticipation() throws IOException {
+        return root().createRequest().withUrlPath(getApiTailUrl("participation")).fetch(Participation.class);
+    }
+
+    /**
+     * Get the number of commits per hour in each day. See
+     * https://developer.github.com/v3/repos/statistics/#get-the-number-of-commits-per-hour-in-each-day
+     *
+     * @return the punch card
+     * @throws IOException
+     *             the io exception
+     */
+    public List<PunchCardItem> getPunchCard() throws IOException {
+        PunchCardItem[] list = root().createRequest()
+                .withUrlPath(getApiTailUrl("punch_card"))
+                .fetch(PunchCardItem[].class);
+        return Arrays.asList(list);
+    }
+
+    /**
+     * This gets the actual statistics from the server. Returns null if they are still being cached.
+     */
+    private PagedIterable<ContributorStats> getContributorStatsImpl() {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("contributors"))
+                .toIterable(ContributorStats[].class, null);
     }
 
     /**

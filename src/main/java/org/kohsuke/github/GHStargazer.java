@@ -1,7 +1,9 @@
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.time.Instant;
 import java.util.Date;
 
 // TODO: Auto-generated Javadoc
@@ -11,11 +13,17 @@ import java.util.Date;
  * @author noctarius
  */
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" }, justification = "JSON API")
-public class GHStargazer {
+public class GHStargazer extends GitHubBridgeAdapterObject {
 
     private GHRepository repository;
-    private String starred_at;
+
+    private String starredAt;
     private GHUser user;
+    /**
+     * Create default GHStargazer instance
+     */
+    public GHStargazer() {
+    }
 
     /**
      * Gets the repository that is stargazed.
@@ -29,12 +37,13 @@ public class GHStargazer {
 
     /**
      * Gets the date when the repository was starred, however old stars before August 2012, will all show the date the
-     * API was changed to support starred_at.
+     * API was changed to support starredAt.
      *
      * @return the date the stargazer was added
      */
-    public Date getStarredAt() {
-        return GitHubClient.parseDate(starred_at);
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getStarredAt() {
+        return GitHubClient.parseInstant(starredAt);
     }
 
     /**

@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
 
-import static org.kohsuke.github.internal.Previews.INERTIA;
-
 // TODO: Auto-generated Javadoc
 /**
  * A GitHub project.
@@ -41,27 +39,119 @@ import static org.kohsuke.github.internal.Previews.INERTIA;
  */
 public class GHProject extends GHObject {
 
+    /**
+     * The enum ProjectState.
+     */
+    public enum ProjectState {
+
+        /** The closed. */
+        CLOSED,
+        /** The open. */
+        OPEN
+    }
+
+    /**
+     * The enum ProjectStateFilter.
+     */
+    public static enum ProjectStateFilter {
+
+        /** The all. */
+        ALL,
+        /** The closed. */
+        CLOSED,
+        /** The open. */
+        OPEN
+    }
+
+    private String body;
+    private GHUser creator;
+    private String htmlUrl;
+    private String name;
+    private int number;
+    private String ownerUrl;
+    private String state;
+
     /** The owner. */
     protected GHObject owner;
 
-    private String owner_url;
-    private String html_url;
-    private String name;
-    private String body;
-    private int number;
-    private String state;
-    private GHUser creator;
+    /**
+     * Create default GHProject instance
+     */
+    public GHProject() {
+    }
+
+    /**
+     * Create column gh project column.
+     *
+     * @param name
+     *            the name
+     * @return the gh project column
+     * @throws IOException
+     *             the io exception
+     */
+    public GHProjectColumn createColumn(String name) throws IOException {
+        return root().createRequest()
+                .method("POST")
+                .with("name", name)
+                .withUrlPath(String.format("/projects/%d/columns", getId()))
+                .fetch(GHProjectColumn.class)
+                .lateBind(this);
+    }
+
+    /**
+     * Delete.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void delete() throws IOException {
+        root().createRequest().method("DELETE").withUrlPath(getApiRoute()).send();
+    }
+
+    /**
+     * Gets body.
+     *
+     * @return the body
+     */
+    public String getBody() {
+        return body;
+    }
+
+    /**
+     * Gets creator.
+     *
+     * @return the creator
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getCreator() {
+        return creator;
+    }
 
     /**
      * Gets the html url.
      *
      * @return the html url
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
      */
-    @Override
-    public URL getHtmlUrl() throws IOException {
-        return GitHubClient.parseURL(html_url);
+    public URL getHtmlUrl() {
+        return GitHubClient.parseURL(htmlUrl);
+    }
+
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Gets number.
+     *
+     * @return the number
+     */
+    public int getNumber() {
+        return number;
     }
 
     /**
@@ -75,11 +165,11 @@ public class GHProject extends GHObject {
     public GHObject getOwner() throws IOException {
         if (owner == null) {
             try {
-                if (owner_url.contains("/orgs/")) {
+                if (ownerUrl.contains("/orgs/")) {
                     owner = root().createRequest().withUrlPath(getOwnerUrl().getPath()).fetch(GHOrganization.class);
-                } else if (owner_url.contains("/users/")) {
+                } else if (ownerUrl.contains("/users/")) {
                     owner = root().createRequest().withUrlPath(getOwnerUrl().getPath()).fetch(GHUser.class);
-                } else if (owner_url.contains("/repos/")) {
+                } else if (ownerUrl.contains("/repos/")) {
                     String[] pathElements = getOwnerUrl().getPath().split("/");
                     owner = GHRepository.read(root(), pathElements[1], pathElements[2]);
                 }
@@ -96,45 +186,7 @@ public class GHProject extends GHObject {
      * @return the owner url
      */
     public URL getOwnerUrl() {
-        return GitHubClient.parseURL(owner_url);
-    }
-
-    /**
-     * Gets node id.
-     *
-     * @return the node id
-     * @deprecated Use {@link GHObject#getNodeId()}
-     */
-    @Deprecated
-    public String getNode_id() {
-        return getNodeId();
-    }
-
-    /**
-     * Gets name.
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Gets body.
-     *
-     * @return the body
-     */
-    public String getBody() {
-        return body;
-    }
-
-    /**
-     * Gets number.
-     *
-     * @return the number
-     */
-    public int getNumber() {
-        return number;
+        return GitHubClient.parseURL(ownerUrl);
     }
 
     /**
@@ -147,74 +199,15 @@ public class GHProject extends GHObject {
     }
 
     /**
-     * Gets creator.
+     * List columns paged iterable.
      *
-     * @return the creator
+     * @return the paged iterable
      */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHUser getCreator() {
-        return creator;
-    }
-
-    /**
-     * Wrap gh project.
-     *
-     * @param root
-     *            the root
-     * @return the gh project
-     */
-    @Deprecated
-    public GHProject wrap(GitHub root) {
-        throw new RuntimeException("Do not use this method.");
-    }
-
-    /**
-     * Wrap gh project.
-     *
-     * @param repo
-     *            the repo
-     * @return the gh project
-     */
-    @Deprecated
-    public GHProject wrap(GHRepository repo) {
-        throw new RuntimeException("Do not use this method.");
-    }
-
-    /**
-     * Wrap gh project.
-     *
-     * @param repo
-     *            the repo
-     * @return the gh project
-     */
-    GHProject lateBind(GHRepository repo) {
-        this.owner = repo;
-        return this;
-    }
-
-    private void edit(String key, Object value) throws IOException {
-        root().createRequest().method("PATCH").withPreview(INERTIA).with(key, value).withUrlPath(getApiRoute()).send();
-    }
-
-    /**
-     * Gets api route.
-     *
-     * @return the api route
-     */
-    protected String getApiRoute() {
-        return "/projects/" + getId();
-    }
-
-    /**
-     * Sets name.
-     *
-     * @param name
-     *            the name
-     * @throws IOException
-     *             the io exception
-     */
-    public void setName(String name) throws IOException {
-        edit("name", name);
+    public PagedIterable<GHProjectColumn> listColumns() {
+        final GHProject project = this;
+        return root().createRequest()
+                .withUrlPath(String.format("/projects/%d/columns", getId()))
+                .toIterable(GHProjectColumn[].class, item -> item.lateBind(project));
     }
 
     /**
@@ -230,39 +223,15 @@ public class GHProject extends GHObject {
     }
 
     /**
-     * The enum ProjectState.
-     */
-    public enum ProjectState {
-
-        /** The open. */
-        OPEN,
-        /** The closed. */
-        CLOSED
-    }
-
-    /**
-     * Sets state.
+     * Sets name.
      *
-     * @param state
-     *            the state
+     * @param name
+     *            the name
      * @throws IOException
      *             the io exception
      */
-    public void setState(ProjectState state) throws IOException {
-        edit("state", state.toString().toLowerCase());
-    }
-
-    /**
-     * The enum ProjectStateFilter.
-     */
-    public static enum ProjectStateFilter {
-
-        /** The all. */
-        ALL,
-        /** The open. */
-        OPEN,
-        /** The closed. */
-        CLOSED
+    public void setName(String name) throws IOException {
+        edit("name", name);
     }
 
     /**
@@ -291,46 +260,39 @@ public class GHProject extends GHObject {
     }
 
     /**
-     * Delete.
+     * Sets state.
      *
+     * @param state
+     *            the state
      * @throws IOException
      *             the io exception
      */
-    public void delete() throws IOException {
-        root().createRequest().withPreview(INERTIA).method("DELETE").withUrlPath(getApiRoute()).send();
+    public void setState(ProjectState state) throws IOException {
+        edit("state", state.toString().toLowerCase());
+    }
+
+    private void edit(String key, Object value) throws IOException {
+        root().createRequest().method("PATCH").with(key, value).withUrlPath(getApiRoute()).send();
     }
 
     /**
-     * List columns paged iterable.
+     * Gets api route.
      *
-     * @return the paged iterable
-     * @throws IOException
-     *             the io exception
+     * @return the api route
      */
-    public PagedIterable<GHProjectColumn> listColumns() throws IOException {
-        final GHProject project = this;
-        return root().createRequest()
-                .withPreview(INERTIA)
-                .withUrlPath(String.format("/projects/%d/columns", getId()))
-                .toIterable(GHProjectColumn[].class, item -> item.lateBind(project));
+    protected String getApiRoute() {
+        return "/projects/" + getId();
     }
 
     /**
-     * Create column gh project column.
+     * Wrap gh project.
      *
-     * @param name
-     *            the name
-     * @return the gh project column
-     * @throws IOException
-     *             the io exception
+     * @param repo
+     *            the repo
+     * @return the gh project
      */
-    public GHProjectColumn createColumn(String name) throws IOException {
-        return root().createRequest()
-                .method("POST")
-                .withPreview(INERTIA)
-                .with("name", name)
-                .withUrlPath(String.format("/projects/%d/columns", getId()))
-                .fetch(GHProjectColumn.class)
-                .lateBind(this);
+    GHProject lateBind(GHRepository repo) {
+        this.owner = repo;
+        return this;
     }
 }

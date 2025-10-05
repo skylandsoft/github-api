@@ -3,6 +3,7 @@ package org.kohsuke.github;
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.time.Instant;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.Date;
@@ -17,35 +18,17 @@ import java.util.List;
  */
 
 @SuppressFBWarnings(value = { "NP_UNWRITTEN_FIELD", "UWF_UNWRITTEN_FIELD" }, justification = "JSON API")
-public class GitCommit {
-    private GHRepository owner;
-    private String sha, node_id, url, html_url;
-    private GitUser author;
-    private GitUser committer;
-
-    private String message;
-
-    private GHVerification verification;
-
+public class GitCommit extends GitHubBridgeAdapterObject {
     /**
      * The Class Tree.
      */
     static class Tree {
 
-        /** The url. */
-        String url;
-
         /** The sha. */
         String sha;
 
-        /**
-         * Gets the url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
+        /** The url. */
+        String url;
 
         /**
          * Gets the sha.
@@ -56,11 +39,29 @@ public class GitCommit {
             return sha;
         }
 
+        /**
+         * Gets the url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
     }
+    private GitUser author;
+    private GitUser committer;
+    private String message;
+
+    private GHRepository owner;
+
+    private List<GHCommit.Parent> parents;
+
+    private String sha, nodeId, url, htmlUrl;
 
     private Tree tree;
 
-    private List<GHCommit.Parent> parents;
+    private GHVerification verification;
 
     /**
      * Instantiates a new git commit.
@@ -77,12 +78,12 @@ public class GitCommit {
      */
     GitCommit(GitCommit commit) {
         // copy constructor used to cast to GitCommit.ShortInfo and from there
-        // to GHCommit, for GHContentUpdateResponse bridge method to GHCommit
+        // to GHCommit, for testing purposes
         this.owner = commit.getOwner();
         this.sha = commit.getSha();
-        this.node_id = commit.getNodeId();
+        this.nodeId = commit.getNodeId();
         this.url = commit.getUrl();
-        this.html_url = commit.getHtmlUrl();
+        this.htmlUrl = commit.getHtmlUrl();
         this.author = commit.getAuthor();
         this.committer = commit.getCommitter();
         this.message = commit.getMessage();
@@ -92,49 +93,41 @@ public class GitCommit {
     }
 
     /**
-     * Gets owner.
+     * Gets author.
      *
-     * @return the repository that contains the commit.
+     * @return the author
      */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHRepository getOwner() {
-        return owner;
+    public GitUser getAuthor() {
+        return author;
     }
 
     /**
-     * Gets SHA1.
+     * Gets authored date.
      *
-     * @return The SHA1 of this commit
+     * @return the authored date
      */
-    public String getSHA1() {
-        return sha;
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getAuthoredDate() {
+        return author.getDate();
     }
 
     /**
-     * Gets SHA.
+     * Gets commit date.
      *
-     * @return The SHA of this commit
+     * @return the commit date
      */
-    public String getSha() {
-        return sha;
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getCommitDate() {
+        return committer.getDate();
     }
 
     /**
-     * Gets node id.
+     * Gets committer.
      *
-     * @return The node id of this commit
+     * @return the committer
      */
-    public String getNodeId() {
-        return node_id;
-    }
-
-    /**
-     * Gets URL.
-     *
-     * @return The URL of this commit
-     */
-    public String getUrl() {
-        return url;
+    public GitUser getCommitter() {
+        return committer;
     }
 
     /**
@@ -143,51 +136,7 @@ public class GitCommit {
      * @return The HTML URL of this commit
      */
     public String getHtmlUrl() {
-        return html_url;
-    }
-
-    /**
-     * Gets author.
-     *
-     * @return the author
-     */
-    @WithBridgeMethods(value = GHCommit.GHAuthor.class, adapterMethod = "gitUserToGHAuthor")
-    public GitUser getAuthor() {
-        return author;
-    }
-
-    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD",
-            justification = "bridge method of getAuthor & getCommitter")
-    private Object gitUserToGHAuthor(GitUser author, Class targetType) {
-        return new GHCommit.GHAuthor(author);
-    }
-
-    /**
-     * Gets authored date.
-     *
-     * @return the authored date
-     */
-    public Date getAuthoredDate() {
-        return author.getDate();
-    }
-
-    /**
-     * Gets committer.
-     *
-     * @return the committer
-     */
-    @WithBridgeMethods(value = GHCommit.GHAuthor.class, adapterMethod = "gitUserToGHAuthor")
-    public GitUser getCommitter() {
-        return committer;
-    }
-
-    /**
-     * Gets commit date.
-     *
-     * @return the commit date
-     */
-    public Date getCommitDate() {
-        return committer.getDate();
+        return htmlUrl;
     }
 
     /**
@@ -200,49 +149,22 @@ public class GitCommit {
     }
 
     /**
-     * Gets Verification Status.
+     * Gets node id.
      *
-     * @return the Verification status
+     * @return The node id of this commit
      */
-    public GHVerification getVerification() {
-        return verification;
+    public String getNodeId() {
+        return nodeId;
     }
 
     /**
-     * Gets the tree.
+     * Gets owner.
      *
-     * @return the tree
+     * @return the repository that contains the commit.
      */
-    Tree getTree() {
-        return tree;
-    }
-
-    /**
-     * Gets the tree SHA 1.
-     *
-     * @return the tree SHA 1
-     */
-    public String getTreeSHA1() {
-        return tree.getSha();
-    }
-
-    /**
-     * Gets the tree url.
-     *
-     * @return the tree url
-     */
-    public String getTreeUrl() {
-        return tree.getUrl();
-    }
-
-    /**
-     * Gets the parents.
-     *
-     * @return the parents
-     */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "acceptable")
-    List<GHCommit.Parent> getParents() {
-        return parents;
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHRepository getOwner() {
+        return owner;
     }
 
     /**
@@ -264,6 +186,88 @@ public class GitCommit {
                 return parents.size();
             }
         };
+    }
+
+    /**
+     * Gets SHA1.
+     *
+     * @return The SHA1 of this commit
+     */
+    public String getSHA1() {
+        return sha;
+    }
+
+    /**
+     * Gets SHA.
+     *
+     * @return The SHA of this commit
+     */
+    public String getSha() {
+        return sha;
+    }
+
+    /**
+     * Gets the tree SHA 1.
+     *
+     * @return the tree SHA 1
+     */
+    public String getTreeSHA1() {
+        return tree.getSha();
+    }
+
+    /**
+     * Gets the tree url.
+     *
+     * @return the tree url
+     */
+    public String getTreeUrl() {
+        return tree.getUrl();
+    }
+
+    /**
+     * Gets URL.
+     *
+     * @return The URL of this commit
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * Gets Verification Status.
+     *
+     * @return the Verification status
+     */
+    public GHVerification getVerification() {
+        return verification;
+    }
+
+    /**
+     * Gets the parents.
+     *
+     * @return the parents
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "acceptable")
+    List<GHCommit.Parent> getParents() {
+        return parents;
+    }
+
+    /**
+     * Gets the tree.
+     *
+     * @return the tree
+     */
+    Tree getTree() {
+        return tree;
+    }
+
+    /**
+     * For test purposes only.
+     *
+     * @return Equivalent GHCommit
+     */
+    GHCommit toGHCommit() {
+        return new GHCommit(new GHCommit.ShortInfo(this));
     }
 
     /**

@@ -28,6 +28,12 @@ public class GHEventTest {
     }
 
     /**
+     * Create default GHEventTest instance
+     */
+    public GHEventTest() {
+    }
+
+    /**
      * Regression test.
      */
     @Test

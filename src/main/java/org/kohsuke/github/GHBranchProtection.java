@@ -1,13 +1,12 @@
 package org.kohsuke.github;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-
-import static org.kohsuke.github.internal.Previews.ZZZAX;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -20,6 +19,500 @@ import static org.kohsuke.github.internal.Previews.ZZZAX;
                 "URF_UNREAD_FIELD" },
         justification = "JSON API")
 public class GHBranchProtection extends GitHubInteractiveObject {
+
+    /**
+     * The type AllowDeletions.
+     */
+    public static class AllowDeletions {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default AllowDeletions instance
+         */
+        public AllowDeletions() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type AllowForcePushes.
+     */
+    public static class AllowForcePushes {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default AllowForcePushes instance
+         */
+        public AllowForcePushes() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type AllowForkSyncing.
+     */
+    public static class AllowForkSyncing {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default AllowForkSyncing instance
+         */
+        public AllowForkSyncing() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type BlockCreations.
+     */
+    public static class BlockCreations {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default BlockCreations instance
+         */
+        public BlockCreations() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type Check.
+     */
+    public static class Check {
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private Integer appId;
+
+        private String context;
+
+        /**
+         * no-arg constructor for the serializer
+         */
+        public Check() {
+        }
+
+        /**
+         * Regular constructor for use in user business logic
+         *
+         * @param context
+         *            the context string of the check
+         * @param appId
+         *            the application ID the check is supposed to come from. Pass "-1" to explicitly allow any app to
+         *            set the status. Pass "null" to automatically select the GitHub App that has recently provided this
+         *            check.
+         */
+        public Check(String context, Integer appId) {
+            this.context = context;
+            this.appId = appId;
+        }
+
+        /**
+         * The application ID the check is supposed to come from. The value "-1" indicates "any source".
+         *
+         * @return the integer
+         */
+        public Integer getAppId() {
+            return appId;
+        }
+
+        /**
+         * The context string of the check
+         *
+         * @return the string
+         */
+        public String getContext() {
+            return context;
+        }
+    }
+
+    /**
+     * The type EnforceAdmins.
+     */
+    public static class EnforceAdmins {
+
+        @JsonProperty
+        private boolean enabled;
+
+        @JsonProperty
+        private String url;
+
+        /**
+         * Create default EnforceAdmins instance
+         */
+        public EnforceAdmins() {
+        }
+
+        /**
+         * Gets url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type LockBranch.
+     */
+    public static class LockBranch {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default LockBranch instance
+         */
+        public LockBranch() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type RequiredConversationResolution.
+     */
+    public static class RequiredConversationResolution {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default RequiredConversationResolution instance
+         */
+        public RequiredConversationResolution() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type RequiredLinearHistory.
+     */
+    public static class RequiredLinearHistory {
+
+        @JsonProperty
+        private boolean enabled;
+
+        /**
+         * Create default RequiredLinearHistory instance
+         */
+        public RequiredLinearHistory() {
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
+    /**
+     * The type RequiredReviews.
+     */
+    public static class RequiredReviews {
+
+        @JsonProperty
+        private boolean dismissStaleReviews;
+
+        @JsonProperty("dismissal_restrictions")
+        private Restrictions dismissalRestriction;
+
+        @JsonProperty
+        private boolean requireCodeOwnerReviews;
+
+        @JsonProperty
+        private boolean requireLastPushApproval;
+
+        @JsonProperty("required_approving_review_count")
+        private int requiredReviewers;
+
+        @JsonProperty
+        private String url;
+
+        /**
+         * Create default RequiredReviews instance
+         */
+        public RequiredReviews() {
+        }
+
+        /**
+         * Gets dismissal restrictions.
+         *
+         * @return the dismissal restrictions
+         */
+        public Restrictions getDismissalRestrictions() {
+            return dismissalRestriction;
+        }
+
+        /**
+         * Gets required reviewers.
+         *
+         * @return the required reviewers
+         */
+        public int getRequiredReviewers() {
+            return requiredReviewers;
+        }
+
+        /**
+         * Gets url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Is dismiss stale reviews boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isDismissStaleReviews() {
+            return dismissStaleReviews;
+        }
+
+        /**
+         * Is require code owner reviews boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isRequireCodeOwnerReviews() {
+            return requireCodeOwnerReviews;
+        }
+
+        /**
+         * Is require last push approval boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isRequireLastPushApproval() {
+            return requireLastPushApproval;
+        }
+    }
+
+    /**
+     * The type RequiredStatusChecks.
+     */
+    public static class RequiredStatusChecks {
+
+        @JsonProperty
+        private Collection<Check> checks;
+
+        @JsonProperty
+        private Collection<String> contexts;
+
+        @JsonProperty
+        private boolean strict;
+
+        @JsonProperty
+        private String url;
+
+        /**
+         * Create default RequiredStatusChecks instance
+         */
+        public RequiredStatusChecks() {
+        }
+
+        /**
+         * Gets checks.
+         *
+         * @return the checks
+         */
+        public Collection<Check> getChecks() {
+            return Collections.unmodifiableCollection(checks);
+        }
+
+        /**
+         * Gets contexts.
+         *
+         * @return the contexts
+         */
+        public Collection<String> getContexts() {
+            return Collections.unmodifiableCollection(contexts);
+        }
+
+        /**
+         * Gets url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Is requires branch up to date boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isRequiresBranchUpToDate() {
+            return strict;
+        }
+    }
+
+    /**
+     * The type Restrictions.
+     */
+    public static class Restrictions {
+
+        @JsonProperty
+        private Collection<GHTeam> teams;
+
+        private String teamsUrl;
+
+        @JsonProperty
+        private String url;
+
+        @JsonProperty
+        private Collection<GHUser> users;
+
+        private String usersUrl;
+
+        /**
+         * Create default Restrictions instance
+         */
+        public Restrictions() {
+        }
+
+        /**
+         * Gets teams.
+         *
+         * @return the teams
+         */
+        public Collection<GHTeam> getTeams() {
+            return Collections.unmodifiableCollection(teams);
+        }
+
+        /**
+         * Gets teams url.
+         *
+         * @return the teams url
+         */
+        public String getTeamsUrl() {
+            return teamsUrl;
+        }
+
+        /**
+         * Gets url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Gets users.
+         *
+         * @return the users
+         */
+        public Collection<GHUser> getUsers() {
+            return Collections.unmodifiableCollection(users);
+        }
+
+        /**
+         * Gets users url.
+         *
+         * @return the users url
+         */
+        public String getUsersUrl() {
+            return usersUrl;
+        }
+    }
+
+    private static class RequiredSignatures {
+        @JsonProperty
+        private boolean enabled;
+
+        @JsonProperty
+        private String url;
+
+        /**
+         * Gets url.
+         *
+         * @return the url
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Is enabled boolean.
+         *
+         * @return the boolean
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+    }
+
     private static final String REQUIRE_SIGNATURES_URI = "/required_signatures";
 
     @JsonProperty
@@ -59,14 +552,9 @@ public class GHBranchProtection extends GitHubInteractiveObject {
     private String url;
 
     /**
-     * Enabled signed commits.
-     *
-     * @throws IOException
-     *             the io exception
+     * Create default GHBranchProtection instance
      */
-    @Preview(ZZZAX)
-    public void enabledSignedCommits() throws IOException {
-        requester().method("POST").withUrlPath(url + REQUIRE_SIGNATURES_URI).fetch(RequiredSignatures.class);
+    public GHBranchProtection() {
     }
 
     /**
@@ -75,9 +563,18 @@ public class GHBranchProtection extends GitHubInteractiveObject {
      * @throws IOException
      *             the io exception
      */
-    @Preview(ZZZAX)
     public void disableSignedCommits() throws IOException {
         requester().method("DELETE").withUrlPath(url + REQUIRE_SIGNATURES_URI).send();
+    }
+
+    /**
+     * Enabled signed commits.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void enabledSignedCommits() throws IOException {
+        requester().method("POST").withUrlPath(url + REQUIRE_SIGNATURES_URI).fetch(RequiredSignatures.class);
     }
 
     /**
@@ -168,7 +665,6 @@ public class GHBranchProtection extends GitHubInteractiveObject {
      * @throws IOException
      *             the io exception
      */
-    @Preview(ZZZAX)
     public boolean getRequiredSignatures() throws IOException {
         return requester().withUrlPath(url + REQUIRE_SIGNATURES_URI).fetch(RequiredSignatures.class).enabled;
     }
@@ -201,361 +697,6 @@ public class GHBranchProtection extends GitHubInteractiveObject {
     }
 
     private Requester requester() {
-        return root().createRequest().withPreview(ZZZAX);
-    }
-
-    /**
-     * The type AllowDeletions.
-     */
-    public static class AllowDeletions {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type AllowForcePushes.
-     */
-    public static class AllowForcePushes {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type AllowForkSyncing.
-     */
-    public static class AllowForkSyncing {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type BlockCreations.
-     */
-    public static class BlockCreations {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type EnforceAdmins.
-     */
-    public static class EnforceAdmins {
-        @JsonProperty
-        private boolean enabled;
-
-        @JsonProperty
-        private String url;
-
-        /**
-         * Gets url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type LockBranch.
-     */
-    public static class LockBranch {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type RequiredConversationResolution.
-     */
-    public static class RequiredConversationResolution {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type RequiredLinearHistory.
-     */
-    public static class RequiredLinearHistory {
-        @JsonProperty
-        private boolean enabled;
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type RequiredReviews.
-     */
-    public static class RequiredReviews {
-        @JsonProperty("dismissal_restrictions")
-        private Restrictions dismissalRestriction;
-
-        @JsonProperty
-        private boolean dismissStaleReviews;
-
-        @JsonProperty
-        private boolean requireCodeOwnerReviews;
-
-        @JsonProperty
-        private boolean requireLastPushApproval;
-
-        @JsonProperty("required_approving_review_count")
-        private int requiredReviewers;
-
-        @JsonProperty
-        private String url;
-
-        /**
-         * Gets dismissal restrictions.
-         *
-         * @return the dismissal restrictions
-         */
-        public Restrictions getDismissalRestrictions() {
-            return dismissalRestriction;
-        }
-
-        /**
-         * Gets url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Is dismiss stale reviews boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isDismissStaleReviews() {
-            return dismissStaleReviews;
-        }
-
-        /**
-         * Is require code owner reviews boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isRequireCodeOwnerReviews() {
-            return requireCodeOwnerReviews;
-        }
-
-        /**
-         * Is require last push approval boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isRequireLastPushApproval() {
-            return requireLastPushApproval;
-        }
-
-        /**
-         * Gets required reviewers.
-         *
-         * @return the required reviewers
-         */
-        public int getRequiredReviewers() {
-            return requiredReviewers;
-        }
-    }
-
-    private static class RequiredSignatures {
-        @JsonProperty
-        private boolean enabled;
-
-        @JsonProperty
-        private String url;
-
-        /**
-         * Gets url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Is enabled boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    /**
-     * The type RequiredStatusChecks.
-     */
-    public static class RequiredStatusChecks {
-        @JsonProperty
-        private Collection<String> contexts;
-
-        @JsonProperty
-        private boolean strict;
-
-        @JsonProperty
-        private String url;
-
-        /**
-         * Gets contexts.
-         *
-         * @return the contexts
-         */
-        public Collection<String> getContexts() {
-            return Collections.unmodifiableCollection(contexts);
-        }
-
-        /**
-         * Gets url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Is requires branch up to date boolean.
-         *
-         * @return the boolean
-         */
-        public boolean isRequiresBranchUpToDate() {
-            return strict;
-        }
-    }
-
-    /**
-     * The type Restrictions.
-     */
-    public static class Restrictions {
-        @JsonProperty
-        private Collection<GHTeam> teams;
-
-        private String teamsUrl;
-
-        @JsonProperty
-        private String url;
-
-        @JsonProperty
-        private Collection<GHUser> users;
-
-        private String usersUrl;
-
-        /**
-         * Gets teams.
-         *
-         * @return the teams
-         */
-        public Collection<GHTeam> getTeams() {
-            return Collections.unmodifiableCollection(teams);
-        }
-
-        /**
-         * Gets teams url.
-         *
-         * @return the teams url
-         */
-        public String getTeamsUrl() {
-            return teamsUrl;
-        }
-
-        /**
-         * Gets url.
-         *
-         * @return the url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * Gets users.
-         *
-         * @return the users
-         */
-        public Collection<GHUser> getUsers() {
-            return Collections.unmodifiableCollection(users);
-        }
-
-        /**
-         * Gets users url.
-         *
-         * @return the users url
-         */
-        public String getUsersUrl() {
-            return usersUrl;
-        }
+        return root().createRequest();
     }
 }

@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.kohsuke.github.internal.Previews.LUKE_CAGE;
-
 // TODO: Auto-generated Javadoc
 /**
  * Builder to configure the branch protection settings.
@@ -25,11 +23,21 @@ import static org.kohsuke.github.internal.Previews.LUKE_CAGE;
                 "URF_UNREAD_FIELD" },
         justification = "JSON API")
 public class GHBranchProtectionBuilder {
-    private final GHBranch branch;
+    private static class Restrictions {
+        private Set<String> teams = new HashSet<String>();
+        private Set<String> users = new HashSet<String>();
+    }
 
+    private static class StatusChecks {
+        final List<GHBranchProtection.Check> checks = new ArrayList<>();
+        boolean strict;
+    }
+    private final GHBranch branch;
     private Map<String, Object> fields = new HashMap<String, Object>();
     private Map<String, Object> prReviews;
+
     private Restrictions restrictions;
+
     private StatusChecks statusChecks;
 
     /**
@@ -50,8 +58,8 @@ public class GHBranchProtectionBuilder {
      *            the checks
      * @return the gh branch protection builder
      */
-    public GHBranchProtectionBuilder addRequiredChecks(Collection<String> checks) {
-        getStatusChecks().contexts.addAll(checks);
+    public GHBranchProtectionBuilder addRequiredChecks(GHBranchProtection.Check... checks) {
+        addRequiredStatusChecks(Arrays.asList(checks));
         return this;
     }
 
@@ -62,8 +70,8 @@ public class GHBranchProtectionBuilder {
      *            the checks
      * @return the gh branch protection builder
      */
-    public GHBranchProtectionBuilder addRequiredChecks(String... checks) {
-        addRequiredChecks(Arrays.asList(checks));
+    public GHBranchProtectionBuilder addRequiredStatusChecks(Collection<GHBranchProtection.Check> checks) {
+        getStatusChecks().checks.addAll(checks);
         return this;
     }
 
@@ -238,18 +246,6 @@ public class GHBranchProtectionBuilder {
     }
 
     /**
-     * Required reviewers gh branch protection builder.
-     *
-     * @param v
-     *            the v
-     * @return the gh branch protection builder
-     */
-    public GHBranchProtectionBuilder requiredReviewers(int v) {
-        getPrReviews().put("required_approving_review_count", v);
-        return this;
-    }
-
-    /**
      * Require branch is up to date gh branch protection builder.
      *
      * @return the gh branch protection builder
@@ -313,6 +309,16 @@ public class GHBranchProtectionBuilder {
     }
 
     /**
+     * Require reviews gh branch protection builder.
+     *
+     * @return the gh branch protection builder
+     */
+    public GHBranchProtectionBuilder requireReviews() {
+        getPrReviews();
+        return this;
+    }
+
+    /**
      * Require all conversations on code to be resolved before a pull request can be merged into a branch that matches
      * this rule.
      *
@@ -359,12 +365,24 @@ public class GHBranchProtectionBuilder {
     }
 
     /**
-     * Require reviews gh branch protection builder.
+     * Required reviewers gh branch protection builder.
+     *
+     * @param v
+     *            the v
+     * @return the gh branch protection builder
+     */
+    public GHBranchProtectionBuilder requiredReviewers(int v) {
+        getPrReviews().put("required_approving_review_count", v);
+        return this;
+    }
+
+    /**
+     * Restrict push access gh branch protection builder.
      *
      * @return the gh branch protection builder
      */
-    public GHBranchProtectionBuilder requireReviews() {
-        getPrReviews();
+    public GHBranchProtectionBuilder restrictPushAccess() {
+        getRestrictions();
         return this;
     }
 
@@ -380,16 +398,6 @@ public class GHBranchProtectionBuilder {
             prReviews.put("dismissal_restrictions", new Restrictions());
         }
 
-        return this;
-    }
-
-    /**
-     * Restrict push access gh branch protection builder.
-     *
-     * @return the gh branch protection builder
-     */
-    public GHBranchProtectionBuilder restrictPushAccess() {
-        getRestrictions();
         return this;
     }
 
@@ -538,16 +546,6 @@ public class GHBranchProtectionBuilder {
     }
 
     private Requester requester() {
-        return branch.root().createRequest().withPreview(LUKE_CAGE);
-    }
-
-    private static class Restrictions {
-        private Set<String> teams = new HashSet<String>();
-        private Set<String> users = new HashSet<String>();
-    }
-
-    private static class StatusChecks {
-        final List<String> contexts = new ArrayList<String>();
-        boolean strict;
+        return branch.root().createRequest();
     }
 }

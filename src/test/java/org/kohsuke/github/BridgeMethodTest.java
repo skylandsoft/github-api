@@ -3,13 +3,11 @@ package org.kohsuke.github;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URL;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -24,13 +22,16 @@ import static org.hamcrest.Matchers.*;
 public class BridgeMethodTest extends Assert {
 
     /**
+     * Create default BridgeMethodTest instance
+     */
+    public BridgeMethodTest() {
+    }
+
+    /**
      * Test bridge methods.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
      */
     @Test
-    public void testBridgeMethods() throws IOException {
+    public void testBridgeMethods() {
 
         // Some would say this is redundant, given that bridge methods are so thin anyway
         // In the interest of maintaining binary compatibility, we'll do this anyway for a sampling of methods
@@ -39,38 +40,63 @@ public class BridgeMethodTest extends Assert {
         // verifyBridgeMethods(new GHCommit(), "getAuthor", GHCommit.GHAuthor.class, GitUser.class);
         // verifyBridgeMethods(new GHCommit(), "getCommitter", GHCommit.GHAuthor.class, GitUser.class);
 
-        verifyBridgeMethods(GHIssue.class, "getCreatedAt", Date.class, String.class);
-        verifyBridgeMethods(GHIssue.class, "getId", int.class, long.class, String.class);
-        verifyBridgeMethods(GHIssue.class, "getUrl", String.class, URL.class);
-        verifyBridgeMethods(GHIssue.class, "comment", 1, void.class, GHIssueComment.class);
+        String artifactId = System.getProperty("test.projectArtifactId", "default");
+        // Only run these tests when building the "bridged" artifact
+        org.junit.Assume.assumeThat(artifactId, equalTo("github-api-bridged"));
 
-        verifyBridgeMethods(GHOrganization.class, "getHtmlUrl", String.class, URL.class);
-        verifyBridgeMethods(GHOrganization.class, "getId", int.class, long.class, String.class);
-        verifyBridgeMethods(GHOrganization.class, "getUrl", String.class, URL.class);
-
-        verifyBridgeMethods(GHRepository.class, "getCollaborators", GHPersonSet.class, Set.class);
-        verifyBridgeMethods(GHRepository.class, "getHtmlUrl", String.class, URL.class);
-        verifyBridgeMethods(GHRepository.class, "getId", int.class, long.class, String.class);
-        verifyBridgeMethods(GHRepository.class, "getUrl", String.class, URL.class);
-
-        verifyBridgeMethods(GHUser.class, "getFollows", GHPersonSet.class, Set.class);
-        verifyBridgeMethods(GHUser.class, "getFollowers", GHPersonSet.class, Set.class);
-        verifyBridgeMethods(GHUser.class, "getOrganizations", GHPersonSet.class, Set.class);
-        verifyBridgeMethods(GHUser.class, "getId", int.class, long.class, String.class);
-
-        verifyBridgeMethods(GHTeam.class, "getId", int.class, long.class, String.class);
-
-        verifyBridgeMethods(GHMemberChanges.FromToPermission.class,
-                "getTo",
-                String.class,
-                GHOrganization.Permission.class);
-        verifyBridgeMethods(GHMemberChanges.FromToPermission.class,
-                "getFrom",
-                String.class,
-                GHOrganization.Permission.class);
-
-        // verifyBridgeMethods(GitHub.class, "getMyself", GHMyself.class, GHUser.class);
-
+        verifyBridgeMethods(GHAppInstallation.class, "getSuspendedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHAppInstallationToken.class, "getExpiresAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHArtifact.class, "getExpiresAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHCheckRun.class, "getStartedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHCheckRun.class, "getCompletedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHCheckSuite.HeadCommit.class, "getTimestamp", Date.class, Instant.class);
+        verifyBridgeMethods(GHCommit.class, "getAuthoredDate", Date.class, Instant.class);
+        verifyBridgeMethods(GHCommit.class, "getCommitDate", Date.class, Instant.class);
+        verifyBridgeMethods(GHDeployKey.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHDeployKey.class, "getLastUsedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHEventInfo.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHEventPayload.Push.PushCommit.class, "getTimestamp", Date.class, Instant.class);
+        verifyBridgeMethods(GHEventPayload.Star.class, "getStarredAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHExternalGroup.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHIssue.class, "getClosedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHIssueEvent.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplacePendingChange.class, "getEffectiveDate", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplacePurchase.class, "getNextBillingDate", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplacePurchase.class, "getFreeTrialEndsOn", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplacePurchase.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplaceUserPurchase.class, "getNextBillingDate", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplaceUserPurchase.class, "getFreeTrialEndsOn", Date.class, Instant.class);
+        verifyBridgeMethods(GHMarketplaceUserPurchase.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHMilestone.class, "getDueOn", Date.class, Instant.class);
+        verifyBridgeMethods(GHMilestone.class, "getClosedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHObject.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHObject.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHPerson.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHPerson.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHProjectsV2Item.class, "getArchivedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHProjectsV2ItemChanges.FromToDate.class, "getFrom", Date.class, Instant.class);
+        verifyBridgeMethods(GHProjectsV2ItemChanges.FromToDate.class, "getTo", Date.class, Instant.class);
+        verifyBridgeMethods(GHPullRequest.class, "getMergedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHPullRequestReview.class, "getSubmittedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHPullRequestReview.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHRepository.class, "getPushedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHRepositoryDiscussion.class, "getAnswerChosenAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHRepositoryDiscussion.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHRepositoryDiscussion.class, "getUpdatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHRepositoryTraffic.DailyInfo.class, "getTimestamp", Date.class, Instant.class);
+        verifyBridgeMethods(GHStargazer.class, "getStarredAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHSubscription.class, "getCreatedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHThread.class, "getLastReadAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHUser.class, "getSuspendedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowJob.class, "getStartedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowJob.class, "getCompletedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowJob.class, "getStartedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowJob.class, "getCompletedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowRun.class, "getRunStartedAt", Date.class, Instant.class);
+        verifyBridgeMethods(GHWorkflowRun.HeadCommit.class, "getTimestamp", Date.class, Instant.class);
+        verifyBridgeMethods(GitCommit.class, "getAuthoredDate", Date.class, Instant.class);
+        verifyBridgeMethods(GitCommit.class, "getCommitDate", Date.class, Instant.class);
+        verifyBridgeMethods(GitUser.class, "getDate", Date.class, Instant.class);
     }
 
     /**

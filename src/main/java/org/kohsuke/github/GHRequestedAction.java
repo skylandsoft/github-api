@@ -2,8 +2,6 @@ package org.kohsuke.github;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.net.URL;
-
 // TODO: Auto-generated Javadoc
 /**
  * The Class GHRequestedAction.
@@ -11,21 +9,16 @@ import java.net.URL;
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD", "URF_UNREAD_FIELD" },
         justification = "JSON API")
 public class GHRequestedAction extends GHObject {
-    private GHRepository owner;
-    private String identifier;
-    private String label;
+
     private String description;
 
+    private String identifier;
+    private String label;
+    private GHRepository owner;
     /**
-     * Wrap.
-     *
-     * @param owner
-     *            the owner
-     * @return the GH requested action
+     * Create default GHRequestedAction instance
      */
-    GHRequestedAction wrap(GHRepository owner) {
-        this.owner = owner;
-        return this;
+    public GHRequestedAction() {
     }
 
     /**
@@ -38,15 +31,6 @@ public class GHRequestedAction extends GHObject {
     }
 
     /**
-     * Gets the label.
-     *
-     * @return the label
-     */
-    String getLabel() {
-        return label;
-    }
-
-    /**
      * Gets the description.
      *
      * @return the description
@@ -56,14 +40,24 @@ public class GHRequestedAction extends GHObject {
     }
 
     /**
-     * Gets the html url.
+     * Gets the label.
      *
-     * @return the html url
-     * @deprecated This object has no HTML URL.
+     * @return the label
      */
-    @Override
-    public URL getHtmlUrl() {
-        return null;
+    String getLabel() {
+        return label;
+    }
+
+    /**
+     * Wrap.
+     *
+     * @param owner
+     *            the owner
+     * @return the GH requested action
+     */
+    GHRequestedAction wrap(GHRepository owner) {
+        this.owner = owner;
+        return this;
     }
 
 }

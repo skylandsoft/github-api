@@ -1,5 +1,7 @@
 package org.kohsuke.github;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,31 +16,21 @@ import java.util.List;
  * @see GHRepository#getTree(String) GHRepository#getTree(String)
  * @see GHTreeEntry#asTree() GHTreeEntry#asTree()
  */
+@SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
+        justification = "JSON API")
 public class GHTree {
 
-    /** The repo. */
-    /* package almost final */GHRepository repo;
-
-    private boolean truncated;
     private String sha, url;
+
     private GHTreeEntry[] tree;
 
+    private boolean truncated;
+    /** The repo. */
+    /* package almost final */GHRepository repo;
     /**
-     * The SHA for this trees.
-     *
-     * @return the sha
+     * Create default GHTree instance
      */
-    public String getSha() {
-        return sha;
-    }
-
-    /**
-     * Return an array of entries of the trees.
-     *
-     * @return the tree
-     */
-    public List<GHTreeEntry> getTree() {
-        return Collections.unmodifiableList(Arrays.asList(tree));
+    public GHTree() {
     }
 
     /**
@@ -59,12 +51,21 @@ public class GHTree {
     }
 
     /**
-     * Returns true if the number of items in the tree array exceeded the GitHub maximum limit.
+     * The SHA for this trees.
      *
-     * @return true if the number of items in the tree array exceeded the GitHub maximum limit otherwise false.
+     * @return the sha
      */
-    public boolean isTruncated() {
-        return truncated;
+    public String getSha() {
+        return sha;
+    }
+
+    /**
+     * Return an array of entries of the trees.
+     *
+     * @return the tree
+     */
+    public List<GHTreeEntry> getTree() {
+        return Collections.unmodifiableList(Arrays.asList(tree));
     }
 
     /**
@@ -75,6 +76,15 @@ public class GHTree {
      */
     public URL getUrl() {
         return GitHubClient.parseURL(url);
+    }
+
+    /**
+     * Returns true if the number of items in the tree array exceeded the GitHub maximum limit.
+     *
+     * @return true if the number of items in the tree array exceeded the GitHub maximum limit otherwise false.
+     */
+    public boolean isTruncated() {
+        return truncated;
     }
 
     /**

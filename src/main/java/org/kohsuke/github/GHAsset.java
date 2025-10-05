@@ -3,7 +3,6 @@ package org.kohsuke.github;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
-import java.net.URL;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -13,15 +12,56 @@ import java.net.URL;
  */
 public class GHAsset extends GHObject {
 
+    /**
+     * Wrap gh asset [ ].
+     *
+     * @param assets
+     *            the assets
+     * @param release
+     *            the release
+     * @return the gh asset [ ]
+     */
+    public static GHAsset[] wrap(GHAsset[] assets, GHRelease release) {
+        for (GHAsset aTo : assets) {
+            aTo.wrap(release);
+        }
+        return assets;
+    }
+
+    private String browserDownloadUrl;
+    private String contentType;
+    private long downloadCount;
+    private String label;
+    private String name;
+    private long size;
+    private String state;
     /** The owner. */
     GHRepository owner;
-    private String name;
-    private String label;
-    private String state;
-    private String content_type;
-    private long size;
-    private long download_count;
-    private String browser_download_url;
+
+    /**
+     * Create default GHAsset instance
+     */
+    public GHAsset() {
+    }
+
+    /**
+     * Delete.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void delete() throws IOException {
+        root().createRequest().method("DELETE").withUrlPath(getApiRoute()).send();
+    }
+
+    /**
+     * Gets browser download url.
+     *
+     * @return the browser download url
+     */
+    public String getBrowserDownloadUrl() {
+        return browserDownloadUrl;
+    }
 
     /**
      * Gets content type.
@@ -29,20 +69,7 @@ public class GHAsset extends GHObject {
      * @return the content type
      */
     public String getContentType() {
-        return content_type;
-    }
-
-    /**
-     * Sets content type.
-     *
-     * @param contentType
-     *            the content type
-     * @throws IOException
-     *             the io exception
-     */
-    public void setContentType(String contentType) throws IOException {
-        edit("content_type", contentType);
-        this.content_type = contentType;
+        return contentType;
     }
 
     /**
@@ -51,7 +78,7 @@ public class GHAsset extends GHObject {
      * @return the download count
      */
     public long getDownloadCount() {
-        return download_count;
+        return downloadCount;
     }
 
     /**
@@ -61,19 +88,6 @@ public class GHAsset extends GHObject {
      */
     public String getLabel() {
         return label;
-    }
-
-    /**
-     * Sets label.
-     *
-     * @param label
-     *            the label
-     * @throws IOException
-     *             the io exception
-     */
-    public void setLabel(String label) throws IOException {
-        edit("label", label);
-        this.label = label;
     }
 
     /**
@@ -114,37 +128,33 @@ public class GHAsset extends GHObject {
     }
 
     /**
-     * Gets the html url.
+     * Sets content type.
      *
-     * @return the html url
-     * @deprecated This object has no HTML URL.
+     * @param contentType
+     *            the content type
+     * @throws IOException
+     *             the io exception
      */
-    @Override
-    public URL getHtmlUrl() {
-        return null;
+    public void setContentType(String contentType) throws IOException {
+        edit("content_type", contentType);
+        this.contentType = contentType;
     }
 
     /**
-     * Gets browser download url.
+     * Sets label.
      *
-     * @return the browser download url
+     * @param label
+     *            the label
+     * @throws IOException
+     *             the io exception
      */
-    public String getBrowserDownloadUrl() {
-        return browser_download_url;
+    public void setLabel(String label) throws IOException {
+        edit("label", label);
+        this.label = label;
     }
 
     private void edit(String key, Object value) throws IOException {
         root().createRequest().with(key, value).method("PATCH").withUrlPath(getApiRoute()).send();
-    }
-
-    /**
-     * Delete.
-     *
-     * @throws IOException
-     *             the io exception
-     */
-    public void delete() throws IOException {
-        root().createRequest().method("DELETE").withUrlPath(getApiRoute()).send();
     }
 
     private String getApiRoute() {
@@ -161,21 +171,5 @@ public class GHAsset extends GHObject {
     GHAsset wrap(GHRelease release) {
         this.owner = release.getOwner();
         return this;
-    }
-
-    /**
-     * Wrap gh asset [ ].
-     *
-     * @param assets
-     *            the assets
-     * @param release
-     *            the release
-     * @return the gh asset [ ]
-     */
-    public static GHAsset[] wrap(GHAsset[] assets, GHRelease release) {
-        for (GHAsset aTo : assets) {
-            aTo.wrap(release);
-        }
-        return assets;
     }
 }

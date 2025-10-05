@@ -11,16 +11,36 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public class GHLabelChanges {
 
-    private GHFrom name;
+    /**
+     * Wrapper for changed values.
+     */
+    public static class GHFrom {
+
+        private String from;
+
+        /**
+         * Create default GHFrom instance
+         */
+        public GHFrom() {
+        }
+
+        /**
+         * Previous value that was changed.
+         *
+         * @return previous value
+         */
+        public String getFrom() {
+            return from;
+        }
+    }
+
     private GHFrom color;
+    private GHFrom name;
 
     /**
-     * Old label name.
-     *
-     * @return old label name (or null if not changed)
+     * Create default GHLabelChanges instance
      */
-    public GHFrom getName() {
-        return name;
+    public GHLabelChanges() {
     }
 
     /**
@@ -33,18 +53,11 @@ public class GHLabelChanges {
     }
 
     /**
-     * Wrapper for changed values.
+     * Old label name.
+     *
+     * @return old label name (or null if not changed)
      */
-    public static class GHFrom {
-        private String from;
-
-        /**
-         * Previous value that was changed.
-         *
-         * @return previous value
-         */
-        public String getFrom() {
-            return from;
-        }
+    public GHFrom getName() {
+        return name;
     }
 }

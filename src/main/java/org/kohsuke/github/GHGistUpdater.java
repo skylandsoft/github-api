@@ -41,10 +41,8 @@ public class GHGistUpdater {
      * @param content
      *            the content
      * @return the gh gist updater
-     * @throws IOException
-     *             the io exception
      */
-    public GHGistUpdater addFile(@Nonnull String fileName, @Nonnull String content) throws IOException {
+    public GHGistUpdater addFile(@Nonnull String fileName, @Nonnull String content) {
         updateFile(fileName, content);
         return this;
     }
@@ -55,67 +53,9 @@ public class GHGistUpdater {
      * @param fileName
      *            the file name
      * @return the GH gist updater
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
      */
-    public GHGistUpdater deleteFile(@Nonnull String fileName) throws IOException {
+    public GHGistUpdater deleteFile(@Nonnull String fileName) {
         files.put(fileName, null);
-        return this;
-    }
-
-    /**
-     * Rename file gh gist updater.
-     *
-     * @param fileName
-     *            the file name
-     * @param newFileName
-     *            the new file name
-     * @return the gh gist updater
-     * @throws IOException
-     *             the io exception
-     */
-    public GHGistUpdater renameFile(@Nonnull String fileName, @Nonnull String newFileName) throws IOException {
-        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
-        file.put("filename", newFileName);
-        return this;
-    }
-
-    /**
-     * Update file gh gist updater.
-     *
-     * @param fileName
-     *            the file name
-     * @param content
-     *            the content
-     * @return the gh gist updater
-     * @throws IOException
-     *             the io exception
-     */
-    public GHGistUpdater updateFile(@Nonnull String fileName, @Nonnull String content) throws IOException {
-        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
-        file.put("content", content);
-        return this;
-    }
-
-    /**
-     * Update file name and content.
-     *
-     * @param fileName
-     *            the file name
-     * @param newFileName
-     *            the new file name
-     * @param content
-     *            the content
-     * @return the gh gist updater
-     * @throws IOException
-     *             the io exception
-     */
-    public GHGistUpdater updateFile(@Nonnull String fileName, @Nonnull String newFileName, @Nonnull String content)
-            throws IOException {
-        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
-        file.put("content", content);
-        file.put("filename", newFileName);
-        files.put(fileName, file);
         return this;
     }
 
@@ -132,6 +72,21 @@ public class GHGistUpdater {
     }
 
     /**
+     * Rename file gh gist updater.
+     *
+     * @param fileName
+     *            the file name
+     * @param newFileName
+     *            the new file name
+     * @return the gh gist updater
+     */
+    public GHGistUpdater renameFile(@Nonnull String fileName, @Nonnull String newFileName) {
+        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
+        file.put("filename", newFileName);
+        return this;
+    }
+
+    /**
      * Updates the Gist based on the parameters specified thus far.
      *
      * @return the gh gist
@@ -141,5 +96,39 @@ public class GHGistUpdater {
     public GHGist update() throws IOException {
         builder.with("files", files);
         return builder.method("PATCH").withUrlPath(base.getApiTailUrl("")).fetch(GHGist.class);
+    }
+
+    /**
+     * Update file gh gist updater.
+     *
+     * @param fileName
+     *            the file name
+     * @param content
+     *            the content
+     * @return the gh gist updater
+     */
+    public GHGistUpdater updateFile(@Nonnull String fileName, @Nonnull String content) {
+        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
+        file.put("content", content);
+        return this;
+    }
+
+    /**
+     * Update file name and content.
+     *
+     * @param fileName
+     *            the file name
+     * @param newFileName
+     *            the new file name
+     * @param content
+     *            the content
+     * @return the gh gist updater
+     */
+    public GHGistUpdater updateFile(@Nonnull String fileName, @Nonnull String newFileName, @Nonnull String content) {
+        Map<String, String> file = files.computeIfAbsent(fileName, d -> new HashMap<>());
+        file.put("content", content);
+        file.put("filename", newFileName);
+        files.put(fileName, file);
+        return this;
     }
 }

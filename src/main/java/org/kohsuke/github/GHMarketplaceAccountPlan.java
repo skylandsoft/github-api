@@ -13,8 +13,14 @@ public class GHMarketplaceAccountPlan extends GHMarketplaceAccount {
 
     @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "Field comes from JSON deserialization")
     private GHMarketplacePendingChange marketplacePendingChange;
+
     @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "Field comes from JSON deserialization")
     private GHMarketplacePurchase marketplacePurchase;
+    /**
+     * Create default GHMarketplaceAccountPlan instance
+     */
+    public GHMarketplaceAccountPlan() {
+    }
 
     /**
      * Gets marketplace pending change.

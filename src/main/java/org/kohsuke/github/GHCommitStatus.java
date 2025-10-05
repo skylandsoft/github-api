@@ -1,8 +1,5 @@
 package org.kohsuke.github;
 
-import java.io.IOException;
-import java.net.URL;
-
 // TODO: Auto-generated Javadoc
 /**
  * Represents a status of a commit.
@@ -15,17 +12,50 @@ import java.net.URL;
  */
 public class GHCommitStatus extends GHObject {
 
-    /** The state. */
-    String state;
-
-    /** The description. */
-    String target_url, description;
-
     /** The context. */
     String context;
 
     /** The creator. */
     GHUser creator;
+
+    /** The state. */
+    String state;
+
+    /** The description. */
+    String targetUrl, description;
+
+    /**
+     * Create default GHCommitStatus instance
+     */
+    public GHCommitStatus() {
+    }
+
+    /**
+     * Gets context.
+     *
+     * @return the context
+     */
+    public String getContext() {
+        return context;
+    }
+
+    /**
+     * Gets creator.
+     *
+     * @return the creator
+     */
+    public GHUser getCreator() {
+        return root().intern(creator);
+    }
+
+    /**
+     * Gets description.
+     *
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
     /**
      * Gets state.
@@ -48,46 +78,7 @@ public class GHCommitStatus extends GHObject {
      * @return the target url
      */
     public String getTargetUrl() {
-        return target_url;
+        return targetUrl;
     }
 
-    /**
-     * Gets description.
-     *
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Gets creator.
-     *
-     * @return the creator
-     * @throws IOException
-     *             the io exception
-     */
-    public GHUser getCreator() throws IOException {
-        return root().intern(creator);
-    }
-
-    /**
-     * Gets context.
-     *
-     * @return the context
-     */
-    public String getContext() {
-        return context;
-    }
-
-    /**
-     * Gets the html url.
-     *
-     * @return the html url
-     * @deprecated This object has no HTML URL.
-     */
-    @Override
-    public URL getHtmlUrl() {
-        return null;
-    }
 }

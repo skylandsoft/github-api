@@ -11,23 +11,35 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
         justification = "JSON API")
 public class GHTag extends GitHubInteractiveObject {
-    private GHRepository owner;
 
-    private String name;
     private GHCommit commit;
 
+    private String name;
+
+    private GHRepository owner;
     /**
-     * Wrap.
-     *
-     * @param owner
-     *            the owner
-     * @return the GH tag
+     * Create default GHTag instance
      */
-    GHTag wrap(GHRepository owner) {
-        this.owner = owner;
-        if (commit != null)
-            commit.wrapUp(owner);
-        return this;
+    public GHTag() {
+    }
+
+    /**
+     * Gets commit.
+     *
+     * @return the commit
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHCommit getCommit() {
+        return commit;
+    }
+
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -41,21 +53,16 @@ public class GHTag extends GitHubInteractiveObject {
     }
 
     /**
-     * Gets name.
+     * Wrap.
      *
-     * @return the name
+     * @param owner
+     *            the owner
+     * @return the GH tag
      */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Gets commit.
-     *
-     * @return the commit
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHCommit getCommit() {
-        return commit;
+    GHTag wrap(GHRepository owner) {
+        this.owner = owner;
+        if (commit != null)
+            commit.wrapUp(owner);
+        return this;
     }
 }

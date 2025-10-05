@@ -32,62 +32,129 @@ public class GitHubConnectionTest extends AbstractGitHubWireMockTest {
     }
 
     /**
-     * Test offline.
-     *
-     * @throws Exception
-     *             the exception
+     * Test anonymous.
      */
     @Test
-    public void testOffline() throws Exception {
-        GitHub hub = GitHub.offline();
-        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
-                equalTo("https://api.github.invalid/test"));
-        assertThat(hub.isAnonymous(), is(true));
+    public void testAnonymous() {
+        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
+        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
+
+        Map<String, String> props = new HashMap<String, String>();
+
+        props.put("endpoint", mockGitHub.apiServer().baseUrl());
+        setupEnvironment(props);
+
+        // No values present except endpoint
+        GitHubBuilder builder = GitHubBuilder.fromEnvironment();
+
+        assertThat(builder.endpoint, equalTo(mockGitHub.apiServer().baseUrl()));
+        assertThat(builder.authorizationProvider, sameInstance(AuthorizationProvider.ANONYMOUS));
+    }
+
+    /**
+     * Test git hub builder from credentials with environment.
+     *
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @Test
+    public void testGitHubBuilderFromCredentialsWithEnvironment() throws IOException {
+        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
+        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+
+        Map<String, String> props = new HashMap<String, String>();
+
+        props.put("endpoint", "bogus endpoint url");
+        props.put("oauth", "bogus oauth token string");
+        setupEnvironment(props);
+        GitHubBuilder builder = GitHubBuilder.fromCredentials();
+
+        assertThat(builder.endpoint, equalTo("bogus endpoint url"));
+
+        // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
+        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), nullValue());
+
+        props.put("login", "bogus login");
+        setupEnvironment(props);
+        builder = GitHubBuilder.fromCredentials();
+
+        // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
+        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
+
+        props.put("jwt", "bogus jwt token string");
+        setupEnvironment(props);
+        builder = GitHubBuilder.fromCredentials();
+
+        assertThat(builder.authorizationProvider, not(instanceOf(UserAuthorizationProvider.class)));
+        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("Bearer bogus jwt token string"));
+    }
+
+    /**
+     * Test git hub builder from credentials with property file.
+     *
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @Test
+    public void testGitHubBuilderFromCredentialsWithPropertyFile() throws IOException {
+        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
+        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+
+        Map<String, String> props = new HashMap<String, String>();
+
+        // Clear the environment
+        setupEnvironment(props);
         try {
-            hub.getRateLimit();
-            fail("Offline instance should always fail");
-        } catch (IOException e) {
-            assertThat(e.getMessage(), equalTo("Offline"));
+            GitHubBuilder.HOME_DIRECTORY = new File(getTestDirectory());
+            try {
+                GitHubBuilder builder = GitHubBuilder.fromCredentials();
+                fail();
+            } catch (Exception e) {
+                assertThat(e, instanceOf(IOException.class));
+                assertThat(e.getMessage(), equalTo("Failed to resolve credentials from ~/.github or the environment."));
+            }
+
+            props = new HashMap<String, String>();
+
+            props.put("endpoint", "bogus endpoint url");
+            props.put("oauth", "bogus oauth token string");
+
+            setupPropertyFile(props);
+
+            GitHubBuilder builder = GitHubBuilder.fromCredentials();
+
+            assertThat(builder.endpoint, equalTo("bogus endpoint url"));
+
+            // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
+                    equalTo("token bogus oauth token string"));
+            assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), nullValue());
+
+            props.put("login", "bogus login");
+            setupPropertyFile(props);
+            builder = GitHubBuilder.fromCredentials();
+
+            // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
+                    equalTo("token bogus oauth token string"));
+            assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
+
+            props.put("jwt", "bogus jwt token string");
+            setupPropertyFile(props);
+            builder = GitHubBuilder.fromCredentials();
+
+            assertThat(builder.authorizationProvider, not(instanceOf(UserAuthorizationProvider.class)));
+            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
+                    equalTo("Bearer bogus jwt token string"));
+        } finally {
+            GitHubBuilder.HOME_DIRECTORY = null;
+            File propertyFile = new File(getTestDirectory(), ".github");
+            propertyFile.delete();
         }
-    }
-
-    /**
-     * Test git hub server with http.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testGitHubServerWithHttp() throws Exception {
-        GitHub hub = GitHub.connectToEnterprise("http://enterprise.kohsuke.org/api/v3", "bogus", "bogus");
-        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
-                equalTo("http://enterprise.kohsuke.org/api/v3/test"));
-    }
-
-    /**
-     * Test git hub server with https.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testGitHubServerWithHttps() throws Exception {
-        GitHub hub = GitHub.connectToEnterprise("https://enterprise.kohsuke.org/api/v3", "bogus", "bogus");
-        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
-                equalTo("https://enterprise.kohsuke.org/api/v3/test"));
-    }
-
-    /**
-     * Test git hub server without server.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testGitHubServerWithoutServer() throws Exception {
-        GitHub hub = GitHub.connectUsingPassword("kohsuke", "bogus");
-        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
-                equalTo("https://api.github.com/test"));
     }
 
     /**
@@ -129,238 +196,15 @@ public class GitHubConnectionTest extends AbstractGitHubWireMockTest {
         assertThat(builder.authorizationProvider, not(instanceOf(UserAuthorizationProvider.class)));
         assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("Bearer bogus jwt token string"));
 
-        props.put("password", "bogus weak password");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromEnvironment();
+        // props.put("password", "bogus weak password");
+        // setupEnvironment(props);
+        // builder = GitHubBuilder.fromEnvironment();
 
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                equalTo("Basic Ym9ndXMgbG9naW46Ym9ndXMgd2VhayBwYXNzd29yZA=="));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
+        // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+        // assertThat(builder.authorizationProvider.getEncodedAuthorization(),
+        // equalTo("Basic Ym9ndXMgbG9naW46Ym9ndXMgd2VhayBwYXNzd29yZA=="));
+        // assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
 
-    }
-
-    /**
-     * Test git hub builder from custom environment.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    @Test
-    public void testGitHubBuilderFromCustomEnvironment() throws IOException {
-        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
-        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
-
-        Map<String, String> props = new HashMap<String, String>();
-
-        props.put("customEndpoint", "bogus endpoint url");
-        props.put("customOauth", "bogus oauth token string");
-        setupEnvironment(props);
-        GitHubBuilder builder = GitHubBuilder
-                .fromEnvironment("customLogin", "customPassword", "customOauth", "customEndpoint");
-
-        assertThat(builder.endpoint, equalTo("bogus endpoint url"));
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), nullValue());
-
-        props.put("customLogin", "bogus login");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromEnvironment("customLogin", "customPassword", "customOauth", "customEndpoint");
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-
-        props.put("customPassword", "bogus weak password");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromEnvironment("customLogin", "customPassword", "customOauth", "customEndpoint");
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                equalTo("Basic Ym9ndXMgbG9naW46Ym9ndXMgd2VhayBwYXNzd29yZA=="));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-    }
-
-    /**
-     * Test git hub builder from credentials with environment.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    @Test
-    public void testGitHubBuilderFromCredentialsWithEnvironment() throws IOException {
-        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
-        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
-        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
-
-        Map<String, String> props = new HashMap<String, String>();
-
-        props.put("endpoint", "bogus endpoint url");
-        props.put("oauth", "bogus oauth token string");
-        setupEnvironment(props);
-        GitHubBuilder builder = GitHubBuilder.fromCredentials();
-
-        assertThat(builder.endpoint, equalTo("bogus endpoint url"));
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), nullValue());
-
-        props.put("login", "bogus login");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromCredentials();
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus oauth token string"));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-
-        props.put("jwt", "bogus jwt token string");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromCredentials();
-
-        assertThat(builder.authorizationProvider, not(instanceOf(UserAuthorizationProvider.class)));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("Bearer bogus jwt token string"));
-
-        props.put("password", "bogus weak password");
-        setupEnvironment(props);
-        builder = GitHubBuilder.fromCredentials();
-
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                equalTo("Basic Ym9ndXMgbG9naW46Ym9ndXMgd2VhayBwYXNzd29yZA=="));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-    }
-
-    /**
-     * Test git hub builder from credentials with property file.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    @Test
-    public void testGitHubBuilderFromCredentialsWithPropertyFile() throws IOException {
-        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
-        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
-        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
-
-        Map<String, String> props = new HashMap<String, String>();
-
-        // Clear the environment
-        setupEnvironment(props);
-        try {
-            GitHubBuilder.HOME_DIRECTORY = new File(getTestDirectory());
-            try {
-                GitHubBuilder builder = GitHubBuilder.fromCredentials();
-                fail();
-            } catch (Exception e) {
-                assertThat(e, instanceOf(IOException.class));
-                assertThat(e.getMessage(), equalTo("Failed to resolve credentials from ~/.github or the environment."));
-            }
-
-            props = new HashMap<String, String>();
-
-            props.put("endpoint", "bogus endpoint url");
-            props.put("oauth", "bogus oauth token string");
-
-            setupPropertyFile(props);
-
-            GitHubBuilder builder = GitHubBuilder.fromCredentials();
-
-            assertThat(builder.endpoint, equalTo("bogus endpoint url"));
-
-            assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                    equalTo("token bogus oauth token string"));
-            assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), nullValue());
-
-            props.put("login", "bogus login");
-            setupPropertyFile(props);
-            builder = GitHubBuilder.fromCredentials();
-
-            assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                    equalTo("token bogus oauth token string"));
-            assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-
-            props.put("jwt", "bogus jwt token string");
-            setupPropertyFile(props);
-            builder = GitHubBuilder.fromCredentials();
-
-            assertThat(builder.authorizationProvider, not(instanceOf(UserAuthorizationProvider.class)));
-            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                    equalTo("Bearer bogus jwt token string"));
-
-            props.put("password", "bogus weak password");
-            setupPropertyFile(props);
-            builder = GitHubBuilder.fromCredentials();
-
-            assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-            assertThat(builder.authorizationProvider.getEncodedAuthorization(),
-                    equalTo("Basic Ym9ndXMgbG9naW46Ym9ndXMgd2VhayBwYXNzd29yZA=="));
-            assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), equalTo("bogus login"));
-        } finally {
-            GitHubBuilder.HOME_DIRECTORY = null;
-            File propertyFile = new File(getTestDirectory(), ".github");
-            propertyFile.delete();
-        }
-    }
-
-    private void setupPropertyFile(Map<String, String> props) throws IOException {
-        File propertyFile = new File(getTestDirectory(), ".github");
-        Properties properties = new Properties();
-        properties.putAll(props);
-        properties.store(new FileOutputStream(propertyFile), "");
-    }
-
-    private String getTestDirectory() {
-        return new File("target").getAbsolutePath();
-    }
-
-    /**
-     * Test anonymous.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    @Test
-    public void testAnonymous() throws IOException {
-        // we disable this test for JDK 16+ as the current hacks in setupEnvironment() don't work with JDK 16+
-        Assume.assumeThat(Double.valueOf(System.getProperty("java.specification.version")), lessThan(16.0));
-
-        Map<String, String> props = new HashMap<String, String>();
-
-        props.put("endpoint", mockGitHub.apiServer().baseUrl());
-        setupEnvironment(props);
-
-        // No values present except endpoint
-        GitHubBuilder builder = GitHubBuilder
-                .fromEnvironment("customLogin", "customPassword", "customOauth", "endpoint");
-
-        assertThat(builder.endpoint, equalTo(mockGitHub.apiServer().baseUrl()));
-        assertThat(builder.authorizationProvider, sameInstance(AuthorizationProvider.ANONYMOUS));
-    }
-
-    /**
-     * Test github builder with app installation token.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testGithubBuilderWithAppInstallationToken() throws Exception {
-
-        GitHubBuilder builder = new GitHubBuilder().withAppInstallationToken("bogus app token");
-        assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
-        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus app token"));
-        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), is(emptyString()));
-
-        // test authorization header is set as in the RFC6749
-        GitHub github = builder.build();
-        // change this to get a request
-        assertThat(github.getClient().getEncodedAuthorization(), equalTo("token bogus app token"));
-        assertThat(github.getClient().getLogin(), is(emptyString()));
     }
 
     /**
@@ -417,6 +261,87 @@ public class GitHubConnectionTest extends AbstractGitHubWireMockTest {
         assertThat(mockGitHub.getRequestCount(), equalTo(1));
     }
 
+    /**
+     * Test git hub server with http.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testGitHubServerWithHttp() throws Exception {
+        GitHub hub = GitHub.connectToEnterpriseWithOAuth("http://enterprise.kohsuke.org/api/v3", "bogus", "bogus");
+        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
+                equalTo("http://enterprise.kohsuke.org/api/v3/test"));
+    }
+
+    /**
+     * Test git hub server with https.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testGitHubServerWithHttps() throws Exception {
+        GitHub hub = GitHub.connectToEnterpriseWithOAuth("https://enterprise.kohsuke.org/api/v3", "bogus", "bogus");
+        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
+                equalTo("https://enterprise.kohsuke.org/api/v3/test"));
+    }
+
+    /**
+     * Test git hub server without server.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testGitHubServerWithoutServer() throws Exception {
+        GitHub hub = GitHub.connect("kohsuke", "bogus");
+        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
+                equalTo("https://api.github.com/test"));
+    }
+
+    /**
+     * Test github builder with app installation token.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testGithubBuilderWithAppInstallationToken() throws Exception {
+
+        GitHubBuilder builder = new GitHubBuilder().withAppInstallationToken("bogus app token");
+        // assertThat(builder.authorizationProvider, instanceOf(UserAuthorizationProvider.class));
+        assertThat(builder.authorizationProvider.getEncodedAuthorization(), equalTo("token bogus app token"));
+        assertThat(((UserAuthorizationProvider) builder.authorizationProvider).getLogin(), is(emptyString()));
+
+        // test authorization header is set as in the RFC6749
+        GitHub github = builder.build();
+        // change this to get a request
+        assertThat(github.getClient().getEncodedAuthorization(), equalTo("token bogus app token"));
+        assertThat(github.getClient().getLogin(), is(emptyString()));
+    }
+
+    /**
+     * Test offline.
+     */
+    @Test
+    public void testOffline() {
+        GitHub hub = GitHub.offline();
+        assertThat(GitHubRequest.getApiURL(hub.getClient().getApiUrl(), "/test").toString(),
+                equalTo("https://api.github.invalid/test"));
+        assertThat(hub.isAnonymous(), is(true));
+        try {
+            hub.getRateLimit();
+            fail("Offline instance should always fail");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), equalTo("Offline"));
+        }
+    }
+
+    private String getTestDirectory() {
+        return new File("target").getAbsolutePath();
+    }
+
     /*
      * Copied from StackOverflow: http://stackoverflow.com/a/7201825/2336755
      *
@@ -457,5 +382,12 @@ public class GitHubConnectionTest extends AbstractGitHubWireMockTest {
         } catch (Exception e1) {
             e1.printStackTrace();
         }
+    }
+
+    private void setupPropertyFile(Map<String, String> props) throws IOException {
+        File propertyFile = new File(getTestDirectory(), ".github");
+        Properties properties = new Properties();
+        properties.putAll(props);
+        properties.store(new FileOutputStream(propertyFile), "");
     }
 }

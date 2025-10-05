@@ -1,8 +1,7 @@
 package org.kohsuke.github.connector;
 
-import org.kohsuke.github.HttpConnector;
+import org.kohsuke.github.GHIOException;
 import org.kohsuke.github.internal.DefaultGitHubConnector;
-import org.kohsuke.github.internal.GitHubConnectorHttpConnectorAdapter;
 
 import java.io.IOException;
 
@@ -13,6 +12,26 @@ import java.io.IOException;
  */
 @FunctionalInterface
 public interface GitHubConnector {
+
+    /**
+     * Default implementation used when connector is not set by user.
+     *
+     * This calls {@link DefaultGitHubConnector#create()} to get the default connector instance. The output of that
+     * method may differ depending on Java version and system properties.
+     *
+     * @see DefaultGitHubConnector#create() DefaultGitHubConnector#create()
+     */
+    GitHubConnector DEFAULT = DefaultGitHubConnector.create();
+
+    /**
+     * Stub implementation that is always off-line.
+     */
+    GitHubConnector OFFLINE = new GitHubConnector() {
+        @Override
+        public GitHubConnectorResponse send(GitHubConnectorRequest connectorRequest) throws IOException {
+            throw new GHIOException("Offline");
+        }
+    };
 
     /**
      * Sends a request and retrieves a raw response for processing.
@@ -30,26 +49,6 @@ public interface GitHubConnector {
      * @return a GitHubConnectorResponse for the request
      * @throws IOException
      *             if there is an I/O error
-     *
-     * @author Liam Newman
      */
     GitHubConnectorResponse send(GitHubConnectorRequest connectorRequest) throws IOException;
-
-    /**
-     * Default implementation used when connector is not set by user.
-     *
-     * This calls {@link DefaultGitHubConnector#create()} to get the default connector instance. The output of that
-     * method may differ depending on Java version and system properties.
-     *
-     * @see DefaultGitHubConnector#create() DefaultGitHubConnector#create()
-     */
-    GitHubConnector DEFAULT = DefaultGitHubConnector.create();
-
-    /**
-     * Stub implementation that is always off-line.
-     *
-     * This connector currently uses {@link GitHubConnectorHttpConnectorAdapter} to maintain backward compatibility as
-     * much as possible.
-     */
-    GitHubConnector OFFLINE = new GitHubConnectorHttpConnectorAdapter(HttpConnector.OFFLINE);
 }

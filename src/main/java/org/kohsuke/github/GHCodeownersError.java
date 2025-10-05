@@ -8,17 +8,15 @@ package org.kohsuke.github;
  * @author Michael Grant
  */
 public class GHCodeownersError {
-    private int line, column;
 
     private String kind, source, suggestion, message, path;
 
+    private int line, column;
+
     /**
-     * Gets line.
-     *
-     * @return the line
+     * Create default GHCodeownersError instance
      */
-    public int getLine() {
-        return line;
+    public GHCodeownersError() {
     }
 
     /**
@@ -40,21 +38,12 @@ public class GHCodeownersError {
     }
 
     /**
-     * Gets source.
+     * Gets line.
      *
-     * @return the source
+     * @return the line
      */
-    public String getSource() {
-        return source;
-    }
-
-    /**
-     * Gets suggestion.
-     *
-     * @return the suggestion
-     */
-    public String getSuggestion() {
-        return suggestion;
+    public int getLine() {
+        return line;
     }
 
     /**
@@ -73,5 +62,23 @@ public class GHCodeownersError {
      */
     public String getPath() {
         return path;
+    }
+
+    /**
+     * Gets source.
+     *
+     * @return the source
+     */
+    public String getSource() {
+        return source;
+    }
+
+    /**
+     * Gets suggestion.
+     *
+     * @return the suggestion
+     */
+    public String getSuggestion() {
+        return suggestion;
     }
 }

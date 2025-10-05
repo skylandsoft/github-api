@@ -27,28 +27,9 @@ public abstract class PagedIterable<T> implements Iterable<T> {
     private int pageSize = 0;
 
     /**
-     * Sets the pagination size.
-     *
-     * <p>
-     * When set to non-zero, each API call will retrieve this many entries.
-     *
-     * @param size
-     *            the size
-     * @return the paged iterable
+     * Instantiate a PagedIterable.
      */
-    public PagedIterable<T> withPageSize(int size) {
-        this.pageSize = size;
-        return this;
-    }
-
-    /**
-     * Returns an iterator over elements of type {@code T}.
-     *
-     * @return an Iterator.
-     */
-    @Nonnull
-    public final PagedIterator<T> iterator() {
-        return _iterator(pageSize);
+    public PagedIterable() {
     }
 
     /**
@@ -62,37 +43,13 @@ public abstract class PagedIterable<T> implements Iterable<T> {
     public abstract PagedIterator<T> _iterator(int pageSize);
 
     /**
-     * Eagerly walk {@link PagedIterator} and return the result in an array.
+     * Returns an iterator over elements of type {@code T}.
      *
-     * @param iterator
-     *            the {@link PagedIterator} to read
-     * @return an array of all elements from the {@link PagedIterator}
-     * @throws IOException
-     *             if an I/O exception occurs.
+     * @return an Iterator.
      */
-    protected T[] toArray(final PagedIterator<T> iterator) throws IOException {
-        try {
-            ArrayList<T[]> pages = new ArrayList<>();
-            int totalSize = 0;
-            T[] item;
-            do {
-                item = iterator.nextPageArray();
-                totalSize += Array.getLength(item);
-                pages.add(item);
-            } while (iterator.hasNext());
-
-            Class<T[]> type = (Class<T[]>) item.getClass();
-
-            return concatenatePages(type, pages, totalSize);
-        } catch (GHException e) {
-            // if there was an exception inside the iterator it is wrapped as a GHException
-            // if the wrapped exception is an IOException, throw that
-            if (e.getCause() instanceof IOException) {
-                throw (IOException) e.getCause();
-            } else {
-                throw e;
-            }
-        }
+    @Nonnull
+    public final PagedIterator<T> iterator() {
+        return _iterator(pageSize);
     }
 
     /**
@@ -132,35 +89,18 @@ public abstract class PagedIterable<T> implements Iterable<T> {
     }
 
     /**
-     * Eagerly walk {@link Iterable} and return the result in a list.
+     * Sets the pagination size.
      *
-     * @return the list
-     * @deprecated Use {@link #toList()} instead.
-     */
-    @Nonnull
-    @Deprecated
-    public List<T> asList() {
-        try {
-            return this.toList();
-        } catch (IOException e) {
-            throw new GHException("Failed to retrieve list: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Eagerly walk {@link Iterable} and return the result in a set.
+     * <p>
+     * When set to non-zero, each API call will retrieve this many entries.
      *
-     * @return the set
-     * @deprecated Use {@link #toSet()} instead.
+     * @param size
+     *            the size
+     * @return the paged iterable
      */
-    @Nonnull
-    @Deprecated
-    public Set<T> asSet() {
-        try {
-            return this.toSet();
-        } catch (IOException e) {
-            throw new GHException("Failed to retrieve list: " + e.getMessage(), e);
-        }
+    public PagedIterable<T> withPageSize(int size) {
+        this.pageSize = size;
+        return this;
     }
 
     /**
@@ -186,6 +126,40 @@ public abstract class PagedIterable<T> implements Iterable<T> {
             position += pageLength;
         }
         return result;
+    }
+
+    /**
+     * Eagerly walk {@link PagedIterator} and return the result in an array.
+     *
+     * @param iterator
+     *            the {@link PagedIterator} to read
+     * @return an array of all elements from the {@link PagedIterator}
+     * @throws IOException
+     *             if an I/O exception occurs.
+     */
+    protected T[] toArray(final PagedIterator<T> iterator) throws IOException {
+        try {
+            ArrayList<T[]> pages = new ArrayList<>();
+            int totalSize = 0;
+            T[] item;
+            do {
+                item = iterator.nextPageArray();
+                totalSize += Array.getLength(item);
+                pages.add(item);
+            } while (iterator.hasNext());
+
+            Class<T[]> type = (Class<T[]>) item.getClass();
+
+            return concatenatePages(type, pages, totalSize);
+        } catch (GHException e) {
+            // if there was an exception inside the iterator it is wrapped as a GHException
+            // if the wrapped exception is an IOException, throw that
+            if (e.getCause() instanceof IOException) {
+                throw (IOException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
 
 }

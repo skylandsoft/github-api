@@ -20,21 +20,9 @@ public class GHGistUpdaterTest extends AbstractGitHubWireMockTest {
     private GHGist gist;
 
     /**
-     * Sets the up.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
+     * Create default GHGistUpdaterTest instance
      */
-    @Before
-    public void setUp() throws IOException {
-        GHGistBuilder builder = new GHGistBuilder(gitHub);
-        gist = builder.description("Test for the API")
-                .file("unmodified.txt", "Should be unmodified")
-                // .file("delete-me.txt", "To be deleted")
-                .file("rename-me.py", "print 'hello'")
-                .file("update-me.txt", "To be updated")
-                .public_(true)
-                .create();
+    public GHGistUpdaterTest() {
     }
 
     /**
@@ -51,6 +39,24 @@ public class GHGistUpdaterTest extends AbstractGitHubWireMockTest {
         }
 
         gist.delete();
+    }
+
+    /**
+     * Sets the up.
+     *
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @Before
+    public void setUp() throws IOException {
+        GHGistBuilder builder = new GHGistBuilder(gitHub);
+        gist = builder.description("Test for the API")
+                .file("unmodified.txt", "Should be unmodified")
+                // .file("delete-me.txt", "To be deleted")
+                .file("rename-me.py", "print 'hello'")
+                .file("update-me.txt", "To be updated")
+                .public_(true)
+                .create();
     }
 
     /**

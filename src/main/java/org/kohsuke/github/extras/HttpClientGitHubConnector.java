@@ -1,5 +1,6 @@
 package org.kohsuke.github.extras;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.github.connector.GitHubConnector;
 import org.kohsuke.github.connector.GitHubConnectorRequest;
@@ -23,7 +24,36 @@ import javax.annotation.Nonnull;
  *
  * @author Liam Newman
  */
+@SuppressFBWarnings(value = { "CT_CONSTRUCTOR_THROW" }, justification = "Basic validation")
 public class HttpClientGitHubConnector implements GitHubConnector {
+
+    /**
+     * Initial response information when a response is initially received and before the body is processed.
+     *
+     * Implementation specific to {@link HttpResponse}.
+     */
+    private static class HttpClientGitHubConnectorResponse extends GitHubConnectorResponse {
+
+        @Nonnull
+        private final HttpResponse<InputStream> response;
+
+        protected HttpClientGitHubConnectorResponse(@Nonnull GitHubConnectorRequest request,
+                @Nonnull HttpResponse<InputStream> response) {
+            super(request, response.statusCode(), response.headers().map());
+            this.response = response;
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+        }
+
+        @CheckForNull
+        @Override
+        protected InputStream rawBodyStream() throws IOException {
+            return response.body();
+        }
+    }
 
     private final HttpClient client;
 
@@ -31,7 +61,17 @@ public class HttpClientGitHubConnector implements GitHubConnector {
      * Instantiates a new HttpClientGitHubConnector with a default HttpClient.
      */
     public HttpClientGitHubConnector() {
-        this(HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build());
+        // GitHubClient handles redirects manually as Java HttpClient copies all the headers when redirecting
+        // even when redirecting to a different host which is problematic as we don't want
+        // to push the Authorization header when redirected to a different host.
+        // This problem was discovered when upload-artifact@v4 was released as the new
+        // service we are redirected to for downloading the artifacts doesn't support
+        // having the Authorization header set.
+        // The new implementation does not push the Authorization header when redirected
+        // to a different host, which is similar to what Okhttp is doing:
+        // https://github.com/square/okhttp/blob/f9dfd4e8cc070ca2875a67d8f7ad939d95e7e296/okhttp/src/main/kotlin/okhttp3/internal/http/RetryAndFollowUpInterceptor.kt#L313-L318
+        // See also https://github.com/arduino/report-size-deltas/pull/83 for more context
+        this(HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build());
     }
 
     /**
@@ -73,35 +113,6 @@ public class HttpClientGitHubConnector implements GitHubConnector {
             return new HttpClientGitHubConnectorResponse(connectorRequest, httpResponse);
         } catch (InterruptedException e) {
             throw (InterruptedIOException) new InterruptedIOException(e.getMessage()).initCause(e);
-        }
-    }
-
-    /**
-     * Initial response information when a response is initially received and before the body is processed.
-     *
-     * Implementation specific to {@link HttpResponse}.
-     */
-    private static class HttpClientGitHubConnectorResponse extends GitHubConnectorResponse.ByteArrayResponse {
-
-        @Nonnull
-        private final HttpResponse<InputStream> response;
-
-        protected HttpClientGitHubConnectorResponse(@Nonnull GitHubConnectorRequest request,
-                @Nonnull HttpResponse<InputStream> response) {
-            super(request, response.statusCode(), response.headers().map());
-            this.response = response;
-        }
-
-        @CheckForNull
-        @Override
-        protected InputStream rawBodyStream() throws IOException {
-            return response.body();
-        }
-
-        @Override
-        public void close() throws IOException {
-            super.close();
-            IOUtils.closeQuietly(response.body());
         }
     }
 }

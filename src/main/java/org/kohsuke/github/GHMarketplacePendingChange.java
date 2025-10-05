@@ -1,7 +1,9 @@
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.time.Instant;
 import java.util.Date;
 
 // TODO: Auto-generated Javadoc
@@ -12,13 +14,30 @@ import java.util.Date;
  * @see GHMarketplaceListAccountBuilder#createRequest()
  */
 public class GHMarketplacePendingChange extends GitHubInteractiveObject {
-    private long id;
+
     @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "Field comes from JSON deserialization")
-    private Long unitCount;
+    private String effectiveDate;
+
+    private long id;
     @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "Field comes from JSON deserialization")
     private GHMarketplacePlan plan;
     @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "Field comes from JSON deserialization")
-    private String effectiveDate;
+    private Long unitCount;
+    /**
+     * Create default GHMarketplacePendingChange instance
+     */
+    public GHMarketplacePendingChange() {
+    }
+
+    /**
+     * Gets effective date.
+     *
+     * @return the effective date
+     */
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getEffectiveDate() {
+        return GitHubClient.parseInstant(effectiveDate);
+    }
 
     /**
      * Gets id.
@@ -27,15 +46,6 @@ public class GHMarketplacePendingChange extends GitHubInteractiveObject {
      */
     public long getId() {
         return id;
-    }
-
-    /**
-     * Gets unit count.
-     *
-     * @return the unit count
-     */
-    public Long getUnitCount() {
-        return unitCount;
     }
 
     /**
@@ -48,12 +58,12 @@ public class GHMarketplacePendingChange extends GitHubInteractiveObject {
     }
 
     /**
-     * Gets effective date.
+     * Gets unit count.
      *
-     * @return the effective date
+     * @return the unit count
      */
-    public Date getEffectiveDate() {
-        return GitHubClient.parseDate(effectiveDate);
+    public Long getUnitCount() {
+        return unitCount;
     }
 
 }

@@ -12,9 +12,138 @@ import java.util.List;
  * @see GHPullRequest#createReview() GHPullRequest#createReview()
  */
 public class GHPullRequestReviewBuilder {
-    private final GHPullRequest pr;
+    /**
+     * Common properties of the review comments, regardless of how the comment is positioned on the gh pull request.
+     */
+    private interface ReviewComment {
+        /**
+         * Gets body.
+         *
+         * @return the body.
+         */
+        String getBody();
+
+        /**
+         * Gets path.
+         *
+         * @return the path.
+         */
+        String getPath();
+    }
+    /**
+     * Single line comment using the relative position in the diff.
+     */
+    static class DraftReviewComment implements ReviewComment {
+        private String body;
+        private String path;
+        private int position;
+
+        DraftReviewComment(String body, String path, int position) {
+            this.body = body;
+            this.path = path;
+            this.position = position;
+        }
+
+        public String getBody() {
+            return body;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        /**
+         * Gets position.
+         *
+         * @return the position
+         */
+        public int getPosition() {
+            return position;
+        }
+    }
+    /**
+     * Multi-line comment.
+     */
+    static class MultilineDraftReviewComment implements ReviewComment {
+        private final String body;
+        private final int line;
+        private final String path;
+        private final int startLine;
+
+        MultilineDraftReviewComment(final String body, final String path, final int startLine, final int line) {
+            this.body = body;
+            this.path = path;
+            this.line = line;
+            this.startLine = startLine;
+        }
+
+        public String getBody() {
+            return this.body;
+        }
+
+        /**
+         * Gets end line of the comment.
+         *
+         * @return the end line of the comment.
+         */
+        public int getLine() {
+            return line;
+        }
+
+        public String getPath() {
+            return this.path;
+        }
+
+        /**
+         * Gets start line of the comment.
+         *
+         * @return the start line of the comment.
+         */
+        public int getStartLine() {
+            return startLine;
+        }
+    }
+
+    /**
+     * Single line comment.
+     */
+    static class SingleLineDraftReviewComment implements ReviewComment {
+        private final String body;
+        private final int line;
+        private final String path;
+
+        SingleLineDraftReviewComment(final String body, final String path, final int line) {
+            this.body = body;
+            this.path = path;
+            this.line = line;
+        }
+
+        public String getBody() {
+            return this.body;
+        }
+
+        /**
+         * Gets line of the comment.
+         *
+         * @return the line of the comment.
+         */
+        public int getLine() {
+            return line;
+        }
+
+        public String getPath() {
+            return this.path;
+        }
+    }
+
+    // public GHPullRequestReview createReview(@Nullable String commitId, String body, GHPullRequestReviewEvent event,
+    // List<GHPullRequestReviewComment> comments) throws IOException
+
     private final Requester builder;
-    private final List<DraftReviewComment> comments = new ArrayList<DraftReviewComment>();
+
+    private final List<ReviewComment> comments = new ArrayList<>();
+
+    private final GHPullRequest pr;
 
     /**
      * Instantiates a new GH pull request review builder.
@@ -25,23 +154,6 @@ public class GHPullRequestReviewBuilder {
     GHPullRequestReviewBuilder(GHPullRequest pr) {
         this.pr = pr;
         this.builder = pr.root().createRequest();
-    }
-
-    // public GHPullRequestReview createReview(@Nullable String commitId, String body, GHPullRequestReviewEvent event,
-    // List<GHPullRequestReviewComment> comments) throws IOException
-
-    /**
-     * The SHA of the commit that needs a review. Not using the latest commit SHA may render your review comment
-     * outdated if a subsequent commit modifies the line you specify as the position. Defaults to the most recent commit
-     * in the pull request when you do not specify a value.
-     *
-     * @param commitId
-     *            the commit id
-     * @return the gh pull request review builder
-     */
-    public GHPullRequestReviewBuilder commitId(String commitId) {
-        builder.with("commit_id", commitId);
-        return this;
     }
 
     /**
@@ -57,34 +169,33 @@ public class GHPullRequestReviewBuilder {
     }
 
     /**
-     * The review action you want to perform. The review actions include: APPROVE, REQUEST_CHANGES, or COMMENT. By
-     * leaving this blank, you set the review action state to PENDING, which means you will need to
-     * {@linkplain GHPullRequestReview#submit(String, GHPullRequestReviewEvent) submit the pull request review} when you
-     * are ready.
-     *
-     * @param event
-     *            the event
-     * @return the gh pull request review builder
-     */
-    public GHPullRequestReviewBuilder event(GHPullRequestReviewEvent event) {
-        builder.with("event", event.action());
-        return this;
-    }
-
-    /**
      * Comment gh pull request review builder.
      *
      * @param body
-     *            The relative path to the file that necessitates a review comment.
+     *            Text of the review comment.
      * @param path
+     *            The relative path to the file that necessitates a review comment.
+     * @param position
      *            The position in the diff where you want to add a review comment. Note this value is not the same as
      *            the line number in the file. For help finding the position value, read the note below.
-     * @param position
-     *            Text of the review comment.
      * @return the gh pull request review builder
      */
     public GHPullRequestReviewBuilder comment(String body, String path, int position) {
         comments.add(new DraftReviewComment(body, path, position));
+        return this;
+    }
+
+    /**
+     * The SHA of the commit that needs a review. Not using the latest commit SHA may render your review comment
+     * outdated if a subsequent commit modifies the line you specify as the position. Defaults to the most recent commit
+     * in the pull request when you do not specify a value.
+     *
+     * @param commitId
+     *            the commit id
+     * @return the gh pull request review builder
+     */
+    public GHPullRequestReviewBuilder commitId(String commitId) {
+        builder.with("commit_id", commitId);
         return this;
     }
 
@@ -103,42 +214,52 @@ public class GHPullRequestReviewBuilder {
                 .wrapUp(pr);
     }
 
-    private static class DraftReviewComment {
-        private String body;
-        private String path;
-        private int position;
+    /**
+     * The review action you want to perform. The review actions include: APPROVE, REQUEST_CHANGES, or COMMENT. By
+     * leaving this blank, you set the review action state to PENDING, which means you will need to
+     * {@linkplain GHPullRequestReview#submit(String, GHPullRequestReviewEvent) submit the pull request review} when you
+     * are ready.
+     *
+     * @param event
+     *            the event
+     * @return the gh pull request review builder
+     */
+    public GHPullRequestReviewBuilder event(GHPullRequestReviewEvent event) {
+        builder.with("event", event.action());
+        return this;
+    }
 
-        DraftReviewComment(String body, String path, int position) {
-            this.body = body;
-            this.path = path;
-            this.position = position;
-        }
+    /**
+     * Add a multi-line comment to the gh pull request review builder.
+     *
+     * @param body
+     *            Text of the review comment.
+     * @param path
+     *            The relative path to the file that necessitates a review comment.
+     * @param startLine
+     *            The first line in the pull request diff that the multi-line comment applies to.
+     * @param endLine
+     *            The last line of the range that the comment applies to.
+     * @return the gh pull request review builder
+     */
+    public GHPullRequestReviewBuilder multiLineComment(String body, String path, int startLine, int endLine) {
+        this.comments.add(new MultilineDraftReviewComment(body, path, startLine, endLine));
+        return this;
+    }
 
-        /**
-         * Gets body.
-         *
-         * @return the body
-         */
-        public String getBody() {
-            return body;
-        }
-
-        /**
-         * Gets path.
-         *
-         * @return the path
-         */
-        public String getPath() {
-            return path;
-        }
-
-        /**
-         * Gets position.
-         *
-         * @return the position
-         */
-        public int getPosition() {
-            return position;
-        }
+    /**
+     * Add a single line comment to the gh pull request review builder.
+     *
+     * @param body
+     *            Text of the review comment.
+     * @param path
+     *            The relative path to the file that necessitates a review comment.
+     * @param line
+     *            The line of the blob in the pull request diff that the comment applies to.
+     * @return the gh pull request review builder
+     */
+    public GHPullRequestReviewBuilder singleLineComment(String body, String path, int line) {
+        this.comments.add(new SingleLineDraftReviewComment(body, path, line));
+        return this;
     }
 }

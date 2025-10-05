@@ -25,11 +25,10 @@ package org.kohsuke.github;
 
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.kohsuke.github.internal.EnumUtils;
 
 import java.io.IOException;
 import java.net.URL;
-
-import static org.kohsuke.github.internal.Previews.SQUIRREL_GIRL;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -41,23 +40,102 @@ import static org.kohsuke.github.internal.Previews.SQUIRREL_GIRL;
  */
 public class GHIssueComment extends GHObject implements Reactable {
 
+    private String body, gravatarId, htmlUrl, authorAssociation;
+
+    private long inReplyToId;
+
+    private GHUser user; // not fully populated. beware.
+
     /** The owner. */
     GHIssue owner;
 
-    private String body, gravatar_id, html_url, author_association;
-    private long in_reply_to_id;
-    private GHUser user; // not fully populated. beware.
+    /**
+     * Create default GHIssueComment instance
+     */
+    public GHIssueComment() {
+    }
 
     /**
-     * Wrap up.
+     * Creates the reaction.
      *
-     * @param owner
-     *            the owner
-     * @return the GH issue comment
+     * @param content
+     *            the content
+     * @return the GH reaction
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
      */
-    GHIssueComment wrapUp(GHIssue owner) {
-        this.owner = owner;
-        return this;
+    public GHReaction createReaction(ReactionContent content) throws IOException {
+        return owner.root()
+                .createRequest()
+                .method("POST")
+                .with("content", content.getContent())
+                .withUrlPath(getApiRoute() + "/reactions")
+                .fetch(GHReaction.class);
+    }
+
+    /**
+     * Deletes this issue comment.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void delete() throws IOException {
+        owner.root().createRequest().method("DELETE").withUrlPath(getApiRoute()).send();
+    }
+
+    /**
+     * Delete reaction.
+     *
+     * @param reaction
+     *            the reaction
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    public void deleteReaction(GHReaction reaction) throws IOException {
+        owner.root()
+                .createRequest()
+                .method("DELETE")
+                .withUrlPath(getApiRoute(), "reactions", String.valueOf(reaction.getId()))
+                .send();
+    }
+
+    /**
+     * Gets author association.
+     *
+     * @return the author association
+     */
+    public GHCommentAuthorAssociation getAuthorAssociation() {
+        return EnumUtils.getEnumOrDefault(GHCommentAuthorAssociation.class,
+                authorAssociation,
+                GHCommentAuthorAssociation.UNKNOWN);
+    }
+
+    /**
+     * The comment itself.
+     *
+     * @return the body
+     */
+    public String getBody() {
+        return body;
+    }
+
+    /**
+     * Gets the html url.
+     *
+     * @return the html url
+     */
+    public URL getHtmlUrl() {
+        return GitHubClient.parseURL(htmlUrl);
+    }
+
+    /**
+     * The comment ID to reply to.
+     *
+     * @return Unique ID number of the comment ID to reply to.
+     */
+    @WithBridgeMethods(value = { String.class, int.class }, adapterMethod = "longToStringOrInt")
+    public long getInReplyToId() {
+        return inReplyToId;
     }
 
     /**
@@ -71,12 +149,24 @@ public class GHIssueComment extends GHObject implements Reactable {
     }
 
     /**
-     * The comment itself.
+     * Gets the user who posted this comment not fully populated.
      *
-     * @return the body
+     * @return the user
      */
-    public String getBody() {
-        return body;
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getRawUser() {
+        return user;
+    }
+
+    /**
+     * Gets the user who posted this comment.
+     *
+     * @return the user
+     * @throws IOException
+     *             the io exception
+     */
+    public GHUser getUser() throws IOException {
+        return owner == null || owner.isOffline() ? user : owner.root().getUser(user.getLogin());
     }
 
     /**
@@ -90,53 +180,15 @@ public class GHIssueComment extends GHObject implements Reactable {
     }
 
     /**
-     * Gets the user who posted this comment fully populated.
+     * List reactions.
      *
-     * @return the user
-     * @throws IOException
-     *             the io exception
+     * @return the paged iterable
      */
-    public GHUser getUser() throws IOException {
-        return owner == null || owner.isOffline() ? user : owner.root().getUser(user.getLogin());
-    }
-
-    /**
-     * Gets the user who posted this comment not fully populated.
-     *
-     * @return the user
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHUser getRawUser() {
-        return user;
-    }
-
-    /**
-     * The comment ID to reply to.
-     *
-     * @return Unique ID number of the comment ID to reply to.
-     */
-    @WithBridgeMethods(value = { String.class, int.class }, adapterMethod = "longToStringOrInt")
-    public long getInReplyToId() {
-        return in_reply_to_id;
-    }
-
-    /**
-     * Gets the html url.
-     *
-     * @return the html url
-     */
-    @Override
-    public URL getHtmlUrl() {
-        return GitHubClient.parseURL(html_url);
-    }
-
-    /**
-     * Gets author association.
-     *
-     * @return the author association
-     */
-    public GHCommentAuthorAssociation getAuthorAssociation() {
-        return GHCommentAuthorAssociation.valueOf(author_association);
+    public PagedIterable<GHReaction> listReactions() {
+        return owner.root()
+                .createRequest()
+                .withUrlPath(getApiRoute() + "/reactions")
+                .toIterable(GHReaction[].class, item -> owner.root());
     }
 
     /**
@@ -157,68 +209,20 @@ public class GHIssueComment extends GHObject implements Reactable {
         this.body = body;
     }
 
-    /**
-     * Deletes this issue comment.
-     *
-     * @throws IOException
-     *             the io exception
-     */
-    public void delete() throws IOException {
-        owner.root().createRequest().method("DELETE").withUrlPath(getApiRoute()).send();
-    }
-
-    /**
-     * Creates the reaction.
-     *
-     * @param content
-     *            the content
-     * @return the GH reaction
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    @Preview(SQUIRREL_GIRL)
-    public GHReaction createReaction(ReactionContent content) throws IOException {
-        return owner.root()
-                .createRequest()
-                .method("POST")
-                .withPreview(SQUIRREL_GIRL)
-                .with("content", content.getContent())
-                .withUrlPath(getApiRoute() + "/reactions")
-                .fetch(GHReaction.class);
-    }
-
-    /**
-     * Delete reaction.
-     *
-     * @param reaction
-     *            the reaction
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    public void deleteReaction(GHReaction reaction) throws IOException {
-        owner.root()
-                .createRequest()
-                .method("DELETE")
-                .withUrlPath(getApiRoute(), "reactions", String.valueOf(reaction.getId()))
-                .send();
-    }
-
-    /**
-     * List reactions.
-     *
-     * @return the paged iterable
-     */
-    @Preview(SQUIRREL_GIRL)
-    public PagedIterable<GHReaction> listReactions() {
-        return owner.root()
-                .createRequest()
-                .withPreview(SQUIRREL_GIRL)
-                .withUrlPath(getApiRoute() + "/reactions")
-                .toIterable(GHReaction[].class, item -> owner.root());
-    }
-
     private String getApiRoute() {
         return "/repos/" + owner.getRepository().getOwnerName() + "/" + owner.getRepository().getName()
                 + "/issues/comments/" + getId();
+    }
+
+    /**
+     * Wrap up.
+     *
+     * @param owner
+     *            the owner
+     * @return the GH issue comment
+     */
+    GHIssueComment wrapUp(GHIssue owner) {
+        this.owner = owner;
+        return this;
     }
 }

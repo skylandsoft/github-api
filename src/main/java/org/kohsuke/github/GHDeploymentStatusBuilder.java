@@ -1,7 +1,5 @@
 package org.kohsuke.github;
 
-import org.kohsuke.github.internal.Previews;
-
 import java.io.IOException;
 
 // TODO: Auto-generated Javadoc
@@ -12,25 +10,8 @@ import java.io.IOException;
  */
 public class GHDeploymentStatusBuilder {
     private final Requester builder;
-    private GHRepository repo;
     private long deploymentId;
-
-    /**
-     * Instantiates a new Gh deployment status builder.
-     *
-     * @param repo
-     *            the repo
-     * @param deploymentId
-     *            the deployment id
-     * @param state
-     *            the state
-     *
-     * @deprecated Use {@link GHDeployment#createStatus(GHDeploymentState)}
-     */
-    @Deprecated
-    public GHDeploymentStatusBuilder(GHRepository repo, int deploymentId, GHDeploymentState state) {
-        this(repo, (long) deploymentId, state);
-    }
+    private GHRepository repo;
 
     /**
      * Instantiates a new GH deployment status builder.
@@ -45,11 +26,7 @@ public class GHDeploymentStatusBuilder {
     GHDeploymentStatusBuilder(GHRepository repo, long deploymentId, GHDeploymentState state) {
         this.repo = repo;
         this.deploymentId = deploymentId;
-        this.builder = repo.root()
-                .createRequest()
-                .withPreview(Previews.ANT_MAN)
-                .withPreview(Previews.FLASH)
-                .method("POST");
+        this.builder = repo.root().createRequest().method("POST");
 
         this.builder.with("state", state);
     }
@@ -61,12 +38,24 @@ public class GHDeploymentStatusBuilder {
      * @param autoInactive
      *            Add inactive status flag
      * @return the gh deployment status builder
-     * @deprecated until preview feature has graduated to stable
      */
-    @Preview({ Previews.ANT_MAN, Previews.FLASH })
     public GHDeploymentStatusBuilder autoInactive(boolean autoInactive) {
         this.builder.with("auto_inactive", autoInactive);
         return this;
+    }
+
+    /**
+     * Create gh deployment status.
+     *
+     * @return the gh deployment status
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public GHDeploymentStatus create() throws IOException {
+        return builder.withUrlPath(repo.getApiTailUrl("deployments/" + deploymentId + "/statuses"))
+                .fetch(GHDeploymentStatus.class)
+                .lateBind(repo);
     }
 
     /**
@@ -88,9 +77,7 @@ public class GHDeploymentStatusBuilder {
      * @param environment
      *            the environment name
      * @return the gh deployment status builder
-     * @deprecated until preview feature has graduated to stable
      */
-    @Preview(Previews.FLASH)
     public GHDeploymentStatusBuilder environment(String environment) {
         this.builder.with("environment", environment);
         return this;
@@ -102,9 +89,7 @@ public class GHDeploymentStatusBuilder {
      * @param environmentUrl
      *            the environment url
      * @return the gh deployment status builder
-     * @deprecated until preview feature has graduated to stable
      */
-    @Preview(Previews.ANT_MAN)
     public GHDeploymentStatusBuilder environmentUrl(String environmentUrl) {
         this.builder.with("environment_url", environmentUrl);
         return this;
@@ -112,45 +97,13 @@ public class GHDeploymentStatusBuilder {
 
     /**
      * The full URL of the deployment's output.
-     * <p>
-     * This method replaces {@link #targetUrl(String) targetUrl}.
      *
      * @param logUrl
      *            the deployment output url
      * @return the gh deployment status builder
-     * @deprecated until preview feature has graduated to stable
      */
-    @Preview(Previews.ANT_MAN)
     public GHDeploymentStatusBuilder logUrl(String logUrl) {
         this.builder.with("log_url", logUrl);
         return this;
-    }
-
-    /**
-     * Target url gh deployment status builder.
-     *
-     * @param targetUrl
-     *            the target url
-     * @return the gh deployment status builder
-     * @deprecated Target url is deprecated in favor of {@link #logUrl(String) logUrl}
-     */
-    @Deprecated
-    public GHDeploymentStatusBuilder targetUrl(String targetUrl) {
-        this.builder.with("target_url", targetUrl);
-        return this;
-    }
-
-    /**
-     * Create gh deployment status.
-     *
-     * @return the gh deployment status
-     *
-     * @throws IOException
-     *             the io exception
-     */
-    public GHDeploymentStatus create() throws IOException {
-        return builder.withUrlPath(repo.getApiTailUrl("deployments/" + deploymentId + "/statuses"))
-                .fetch(GHDeploymentStatus.class)
-                .lateBind(repo);
     }
 }

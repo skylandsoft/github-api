@@ -16,6 +16,12 @@ import static org.hamcrest.Matchers.notNullValue;
 public class GHPersonTest extends AbstractGitHubWireMockTest {
 
     /**
+     * Create default GHPersonTest instance
+     */
+    public GHPersonTest() {
+    }
+
+    /**
      * Test fields for organization.
      *
      * @throws Exception
@@ -42,6 +48,10 @@ public class GHPersonTest extends AbstractGitHubWireMockTest {
         assertThat(user.isSiteAdmin(), notNullValue());
     }
 
+    private GHRepository getRepository(GitHub gitHub) throws IOException {
+        return gitHub.getOrganization("hub4j-test-org").getRepository("github-api");
+    }
+
     /**
      * Gets the repository.
      *
@@ -51,9 +61,5 @@ public class GHPersonTest extends AbstractGitHubWireMockTest {
      */
     protected GHRepository getRepository() throws IOException {
         return getRepository(gitHub);
-    }
-
-    private GHRepository getRepository(GitHub gitHub) throws IOException {
-        return gitHub.getOrganization("hub4j-test-org").getRepository("github-api");
     }
 }

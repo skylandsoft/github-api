@@ -13,6 +13,8 @@ import org.kohsuke.github.GHBranchProtection.RequiredLinearHistory;
 import org.kohsuke.github.GHBranchProtection.RequiredReviews;
 import org.kohsuke.github.GHBranchProtection.RequiredStatusChecks;
 
+import java.util.ArrayList;
+
 import static org.hamcrest.Matchers.*;
 
 // TODO: Auto-generated Javadoc
@@ -20,12 +22,19 @@ import static org.hamcrest.Matchers.*;
  * The Class GHBranchProtectionTest.
  */
 public class GHBranchProtectionTest extends AbstractGitHubWireMockTest {
-    private static final String BRANCH = "main";
-    private static final String BRANCH_REF = "heads/" + BRANCH;
 
+    private static final String BRANCH = "main";
+
+    private static final String BRANCH_REF = "heads/" + BRANCH;
     private GHBranch branch;
 
     private GHRepository repo;
+
+    /**
+     * Create default GHBranchProtectionTest instance
+     */
+    public GHBranchProtectionTest() {
+    }
 
     /**
      * Sets the up.
@@ -40,6 +49,45 @@ public class GHBranchProtectionTest extends AbstractGitHubWireMockTest {
     }
 
     /**
+     * Checks with app ids are being populated
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testChecksWithAppIds() throws Exception {
+        GHBranchProtection protection = branch.enableProtection()
+                .addRequiredChecks(new GHBranchProtection.Check("context", -1),
+                        new GHBranchProtection.Check("context2", 123),
+                        new GHBranchProtection.Check("context3", null))
+                .enable();
+
+        ArrayList<GHBranchProtection.Check> resultChecks = new ArrayList<>(
+                protection.getRequiredStatusChecks().getChecks());
+
+        assertThat(resultChecks.size(), is(3));
+        assertThat(resultChecks.get(0).getContext(), is("context"));
+        assertThat(resultChecks.get(0).getAppId(), nullValue());
+        assertThat(resultChecks.get(1).getContext(), is("context2"));
+        assertThat(resultChecks.get(1).getAppId(), is(123));
+        assertThat(resultChecks.get(2).getContext(), is("context3"));
+    }
+
+    /**
+     * Test disable protection only.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testDisableProtectionOnly() throws Exception {
+        GHBranchProtection protection = branch.enableProtection().enable();
+        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
+        branch.disableProtection();
+        assertThat(repo.getBranch(BRANCH).isProtected(), is(false));
+    }
+
+    /**
      * Test enable branch protections.
      *
      * @throws Exception
@@ -49,7 +97,7 @@ public class GHBranchProtectionTest extends AbstractGitHubWireMockTest {
     public void testEnableBranchProtections() throws Exception {
         // team/user restrictions require an organization repo to test against
         GHBranchProtection protection = branch.enableProtection()
-                .addRequiredChecks("test-status-check")
+                .addRequiredChecks(new GHBranchProtection.Check("test-status-check", null))
                 .requireBranchIsUpToDate()
                 .requireCodeOwnReviews()
                 .requireLastPushApproval()
@@ -70,6 +118,78 @@ public class GHBranchProtectionTest extends AbstractGitHubWireMockTest {
         // Get goes through a different code path. Make sure it also gets the correct data.
         protection = branch.getProtection();
         verifyBranchProtection(protection);
+    }
+
+    /**
+     * Test enable protection only.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testEnableProtectionOnly() throws Exception {
+        branch.enableProtection().enable();
+        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
+    }
+
+    /**
+     * Test enable require reviews only.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testEnableRequireReviewsOnly() throws Exception {
+        GHBranchProtection protection = branch.enableProtection().requireReviews().enable();
+
+        RequiredReviews requiredReviews = protection.getRequiredReviews();
+        assertThat(protection.getRequiredReviews(), notNullValue());
+        assertThat(requiredReviews.isDismissStaleReviews(), is(false));
+        assertThat(requiredReviews.isRequireCodeOwnerReviews(), is(false));
+        assertThat(protection.getRequiredReviews().getRequiredReviewers(), equalTo(1));
+
+        // Get goes through a different code path. Make sure it also gets the correct data.
+        protection = branch.getProtection();
+        requiredReviews = protection.getRequiredReviews();
+
+        assertThat(protection.getRequiredReviews(), notNullValue());
+        assertThat(requiredReviews.isDismissStaleReviews(), is(false));
+        assertThat(requiredReviews.isRequireCodeOwnerReviews(), is(false));
+        assertThat(protection.getRequiredReviews().getRequiredReviewers(), equalTo(1));
+    }
+
+    /**
+     * Test get protection.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testGetProtection() throws Exception {
+        GHBranchProtection protection = branch.enableProtection().enable();
+        GHBranchProtection protectionTest = repo.getBranch(BRANCH).getProtection();
+        Boolean condition = protectionTest instanceof GHBranchProtection;
+        assertThat(protectionTest, instanceOf(GHBranchProtection.class));
+        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
+    }
+
+    /**
+     * Test signed commits.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testSignedCommits() throws Exception {
+        GHBranchProtection protection = branch.enableProtection().enable();
+
+        assertThat(protection.getRequiredSignatures(), is(false));
+
+        protection.enabledSignedCommits();
+        assertThat(protection.getRequiredSignatures(), is(true));
+
+        protection.disableSignedCommits();
+        assertThat(protection.getRequiredSignatures(), is(false));
     }
 
     private void verifyBranchProtection(GHBranchProtection protection) {
@@ -116,91 +236,5 @@ public class GHBranchProtectionTest extends AbstractGitHubWireMockTest {
         RequiredLinearHistory requiredLinearHistory = protection.getRequiredLinearHistory();
         assertThat(requiredLinearHistory, notNullValue());
         assertThat(requiredLinearHistory.isEnabled(), is(true));
-    }
-
-    /**
-     * Test enable protection only.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testEnableProtectionOnly() throws Exception {
-        branch.enableProtection().enable();
-        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
-    }
-
-    /**
-     * Test disable protection only.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testDisableProtectionOnly() throws Exception {
-        GHBranchProtection protection = branch.enableProtection().enable();
-        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
-        branch.disableProtection();
-        assertThat(repo.getBranch(BRANCH).isProtected(), is(false));
-    }
-
-    /**
-     * Test enable require reviews only.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testEnableRequireReviewsOnly() throws Exception {
-        GHBranchProtection protection = branch.enableProtection().requireReviews().enable();
-
-        RequiredReviews requiredReviews = protection.getRequiredReviews();
-        assertThat(protection.getRequiredReviews(), notNullValue());
-        assertThat(requiredReviews.isDismissStaleReviews(), is(false));
-        assertThat(requiredReviews.isRequireCodeOwnerReviews(), is(false));
-        assertThat(protection.getRequiredReviews().getRequiredReviewers(), equalTo(1));
-
-        // Get goes through a different code path. Make sure it also gets the correct data.
-        protection = branch.getProtection();
-        requiredReviews = protection.getRequiredReviews();
-
-        assertThat(protection.getRequiredReviews(), notNullValue());
-        assertThat(requiredReviews.isDismissStaleReviews(), is(false));
-        assertThat(requiredReviews.isRequireCodeOwnerReviews(), is(false));
-        assertThat(protection.getRequiredReviews().getRequiredReviewers(), equalTo(1));
-    }
-
-    /**
-     * Test signed commits.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testSignedCommits() throws Exception {
-        GHBranchProtection protection = branch.enableProtection().enable();
-
-        assertThat(protection.getRequiredSignatures(), is(false));
-
-        protection.enabledSignedCommits();
-        assertThat(protection.getRequiredSignatures(), is(true));
-
-        protection.disableSignedCommits();
-        assertThat(protection.getRequiredSignatures(), is(false));
-    }
-
-    /**
-     * Test get protection.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void testGetProtection() throws Exception {
-        GHBranchProtection protection = branch.enableProtection().enable();
-        GHBranchProtection protectionTest = repo.getBranch(BRANCH).getProtection();
-        Boolean condition = protectionTest instanceof GHBranchProtection;
-        assertThat(protectionTest, instanceOf(GHBranchProtection.class));
-        assertThat(repo.getBranch(BRANCH).isProtected(), is(true));
     }
 }

@@ -14,29 +14,6 @@ import java.util.List;
  * Builder pattern for creating a new tree. Based on https://developer.github.com/v3/git/trees/#create-a-tree
  */
 public class GHTreeBuilder {
-    private final GHRepository repo;
-    private final Requester req;
-
-    private final List<TreeEntry> treeEntries = new ArrayList<TreeEntry>();
-
-    // Issue #636: Create Tree no longer accepts null value in sha field
-    @JsonInclude(Include.NON_NULL)
-    @SuppressFBWarnings("URF_UNREAD_FIELD")
-    private static class TreeEntry {
-
-        private final String path;
-        private final String mode;
-        private final String type;
-        private String sha;
-        private String content;
-
-        private TreeEntry(String path, String mode, String type) {
-            this.path = path;
-            this.mode = mode;
-            this.type = type;
-        }
-    }
-
     private static class DeleteTreeEntry extends TreeEntry {
         /**
          * According to reference doc https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree: if
@@ -52,6 +29,29 @@ public class GHTreeBuilder {
             super(path, "100644", "blob");
         }
     }
+    // Issue #636: Create Tree no longer accepts null value in sha field
+    @JsonInclude(Include.NON_NULL)
+    @SuppressFBWarnings("URF_UNREAD_FIELD")
+    private static class TreeEntry {
+
+        private String content;
+        private final String mode;
+        private final String path;
+        private String sha;
+        private final String type;
+
+        private TreeEntry(String path, String mode, String type) {
+            this.path = path;
+            this.mode = mode;
+            this.type = type;
+        }
+    }
+
+    private final GHRepository repo;
+
+    private final Requester req;
+
+    private final List<TreeEntry> treeEntries = new ArrayList<TreeEntry>();
 
     /**
      * Instantiates a new GH tree builder.
@@ -65,82 +65,18 @@ public class GHTreeBuilder {
     }
 
     /**
-     * Base tree gh tree builder.
-     *
-     * @param baseTree
-     *            the SHA of tree you want to update with new data
-     * @return the gh tree builder
-     */
-    public GHTreeBuilder baseTree(String baseTree) {
-        req.with("base_tree", baseTree);
-        return this;
-    }
-
-    /**
-     * Adds a new entry to the tree. Exactly one of the parameters {@code sha} and {@code content} must be non-null.
+     * Adds a new entry with the given text content to the tree.
      *
      * @param path
-     *            the path
-     * @param mode
-     *            the mode
-     * @param type
-     *            the type
-     * @param sha
-     *            the sha
+     *            the file path in the tree
      * @param content
-     *            the content
-     * @return the gh tree builder
-     * @deprecated use {@link #add(String, String, boolean)} or {@link #add(String, byte[], boolean)} instead.
-     */
-    @Deprecated
-    public GHTreeBuilder entry(String path, String mode, String type, String sha, String content) {
-        TreeEntry entry = new TreeEntry(path, mode, type);
-        entry.sha = sha;
-        entry.content = content;
-        treeEntries.add(entry);
-        return this;
-    }
-
-    /**
-     * Specialized version of {@link #entry(String, String, String, String, String)} for adding an existing blob
-     * referred by its SHA.
-     *
-     * @param path
-     *            the path
-     * @param sha
-     *            the sha
+     *            the file content as UTF-8 encoded string
      * @param executable
-     *            the executable
-     * @return the gh tree builder
-     * @deprecated use {@link #add(String, String, boolean)} or {@link #add(String, byte[], boolean)} instead.
+     *            true, if the file should be executable
+     * @return this GHTreeBuilder
      */
-    @Deprecated
-    public GHTreeBuilder shaEntry(String path, String sha, boolean executable) {
-        TreeEntry entry = new TreeEntry(path, executable ? "100755" : "100644", "blob");
-        entry.sha = sha;
-        treeEntries.add(entry);
-        return this;
-    }
-
-    /**
-     * Specialized version of {@link #entry(String, String, String, String, String)} for adding a text file with the
-     * specified {@code content}.
-     *
-     * @param path
-     *            the path
-     * @param content
-     *            the content
-     * @param executable
-     *            the executable
-     * @return the gh tree builder
-     * @deprecated use {@link #add(String, String, boolean)} or {@link #add(String, byte[], boolean)} instead.
-     */
-    @Deprecated
-    public GHTreeBuilder textEntry(String path, String content, boolean executable) {
-        TreeEntry entry = new TreeEntry(path, executable ? "100755" : "100644", "blob");
-        entry.content = content;
-        treeEntries.add(entry);
-        return this;
+    public GHTreeBuilder add(String path, String content, boolean executable) {
+        return add(path, content.getBytes(StandardCharsets.UTF_8), executable);
     }
 
     /**
@@ -164,18 +100,27 @@ public class GHTreeBuilder {
     }
 
     /**
-     * Adds a new entry with the given text content to the tree.
+     * Base tree gh tree builder.
      *
-     * @param path
-     *            the file path in the tree
-     * @param content
-     *            the file content as UTF-8 encoded string
-     * @param executable
-     *            true, if the file should be executable
-     * @return this GHTreeBuilder
+     * @param baseTree
+     *            the SHA of tree you want to update with new data
+     * @return the gh tree builder
      */
-    public GHTreeBuilder add(String path, String content, boolean executable) {
-        return add(path, content.getBytes(StandardCharsets.UTF_8), executable);
+    public GHTreeBuilder baseTree(String baseTree) {
+        req.with("base_tree", baseTree);
+        return this;
+    }
+
+    /**
+     * Creates a tree based on the parameters specified thus far.
+     *
+     * @return the gh tree
+     * @throws IOException
+     *             the io exception
+     */
+    public GHTree create() throws IOException {
+        req.with("tree", treeEntries);
+        return req.method("POST").withUrlPath(getApiTail()).fetch(GHTree.class).wrap(repo);
     }
 
     /**
@@ -191,19 +136,47 @@ public class GHTreeBuilder {
         return this;
     }
 
-    private String getApiTail() {
-        return String.format("/repos/%s/%s/git/trees", repo.getOwnerName(), repo.getName());
+    /**
+     * Specialized version of entry() for adding an existing blob referred by its SHA.
+     *
+     * @param path
+     *            the path
+     * @param sha
+     *            the sha
+     * @param executable
+     *            the executable
+     * @return the gh tree builder
+     * @deprecated use {@link #add(String, String, boolean)} or {@link #add(String, byte[], boolean)} instead.
+     */
+    @Deprecated
+    public GHTreeBuilder shaEntry(String path, String sha, boolean executable) {
+        TreeEntry entry = new TreeEntry(path, executable ? "100755" : "100644", "blob");
+        entry.sha = sha;
+        treeEntries.add(entry);
+        return this;
     }
 
     /**
-     * Creates a tree based on the parameters specified thus far.
+     * Specialized version of entry() for adding an existing blob specified {@code content}.
      *
-     * @return the gh tree
-     * @throws IOException
-     *             the io exception
+     * @param path
+     *            the path
+     * @param content
+     *            the content
+     * @param executable
+     *            the executable
+     * @return the gh tree builder
+     * @deprecated use {@link #add(String, String, boolean)} or {@link #add(String, byte[], boolean)} instead.
      */
-    public GHTree create() throws IOException {
-        req.with("tree", treeEntries);
-        return req.method("POST").withUrlPath(getApiTail()).fetch(GHTree.class).wrap(repo);
+    @Deprecated
+    public GHTreeBuilder textEntry(String path, String content, boolean executable) {
+        TreeEntry entry = new TreeEntry(path, executable ? "100755" : "100644", "blob");
+        entry.content = content;
+        treeEntries.add(entry);
+        return this;
+    }
+
+    private String getApiTail() {
+        return String.format("/repos/%s/%s/git/trees", repo.getOwnerName(), repo.getName());
     }
 }

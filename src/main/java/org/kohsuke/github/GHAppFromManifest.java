@@ -9,9 +9,15 @@ package org.kohsuke.github;
 public class GHAppFromManifest extends GHApp {
 
     private String clientId;
+
     private String clientSecret;
-    private String webhookSecret;
     private String pem;
+    private String webhookSecret;
+    /**
+     * Create default GHAppFromManifest instance
+     */
+    public GHAppFromManifest() {
+    }
 
     /**
      * Gets the client id
@@ -32,20 +38,20 @@ public class GHAppFromManifest extends GHApp {
     }
 
     /**
-     * Gets the webhook secret
-     *
-     * @return the webhook secret
-     */
-    public String getWebhookSecret() {
-        return webhookSecret;
-    }
-
-    /**
      * Gets the pem
      *
      * @return the pem
      */
     public String getPem() {
         return pem;
+    }
+
+    /**
+     * Gets the webhook secret
+     *
+     * @return the webhook secret
+     */
+    public String getWebhookSecret() {
+        return webhookSecret;
     }
 }

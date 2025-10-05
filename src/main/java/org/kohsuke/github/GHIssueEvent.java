@@ -1,9 +1,10 @@
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.time.Instant;
 import java.util.Date;
-import java.util.Locale;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -13,48 +14,28 @@ import java.util.Locale;
  * @see <a href="https://developer.github.com/v3/issues/events/">Github documentation for issue events</a>
  */
 public class GHIssueEvent extends GitHubInteractiveObject {
-    private long id;
-    private String node_id;
-    private String url;
+
     private GHUser actor;
-    private String event;
-    private String commit_id;
-    private String commit_url;
-    private String created_at;
-    private GHMilestone milestone;
-    private GHLabel label;
+
     private GHUser assignee;
-    private GHIssueRename rename;
-    private GHUser reviewRequester;
-    private GHUser requestedReviewer;
-
+    private String commitId;
+    private String commitUrl;
+    private String createdAt;
+    private String event;
+    private long id;
     private GHIssue issue;
+    private GHLabel label;
+    private GHMilestone milestone;
+    private String nodeId;
+    private GHIssueRename rename;
+    private GHUser requestedReviewer;
+    private GHUser reviewRequester;
+    private String url;
 
     /**
-     * Gets id.
-     *
-     * @return the id
+     * Create default GHIssueEvent instance
      */
-    public long getId() {
-        return id;
-    }
-
-    /**
-     * Gets node id.
-     *
-     * @return the node id
-     */
-    public String getNodeId() {
-        return node_id;
-    }
-
-    /**
-     * Gets url.
-     *
-     * @return the url
-     */
-    public String getUrl() {
-        return url;
+    public GHIssueEvent() {
     }
 
     /**
@@ -65,78 +46,6 @@ public class GHIssueEvent extends GitHubInteractiveObject {
     @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
     public GHUser getActor() {
         return actor;
-    }
-
-    /**
-     * Gets event.
-     *
-     * @return the event
-     */
-    public GHIssueType getEvent() {
-        try {
-            return GHIssueType.valueOf(event.replace('-', '_').replace(' ', '_').toUpperCase(Locale.ENGLISH));
-        } catch (Exception ignore) {
-            return null;
-        }
-    }
-
-    /**
-     * Gets commit id.
-     *
-     * @return the commit id
-     */
-    public String getCommitId() {
-        return commit_id;
-    }
-
-    /**
-     * Gets commit url.
-     *
-     * @return the commit url
-     */
-    public String getCommitUrl() {
-        return commit_url;
-    }
-
-    /**
-     * Gets created at.
-     *
-     * @return the created at
-     */
-    public Date getCreatedAt() {
-        return GitHubClient.parseDate(created_at);
-    }
-
-    /**
-     * Gets issue.
-     *
-     * @return the issue
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHIssue getIssue() {
-        return issue;
-    }
-
-    /**
-     * Get the {@link GHMilestone} that this issue was added to or removed from. Only present for events "milestoned"
-     * and "demilestoned", <code>null</code> otherwise.
-     *
-     * @return the milestone
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHMilestone getMilestone() {
-        return milestone;
-    }
-
-    /**
-     * Get the {@link GHLabel} that was added to or removed from the issue. Only present for events "labeled" and
-     * "unlabeled", <code>null</code> otherwise.
-     *
-     * @return the label
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHLabel getLabel() {
-        return label;
     }
 
     /**
@@ -151,6 +60,93 @@ public class GHIssueEvent extends GitHubInteractiveObject {
     }
 
     /**
+     * Gets commit id.
+     *
+     * @return the commit id
+     */
+    public String getCommitId() {
+        return commitId;
+    }
+
+    /**
+     * Gets commit url.
+     *
+     * @return the commit url
+     */
+    public String getCommitUrl() {
+        return commitUrl;
+    }
+
+    /**
+     * Gets created at.
+     *
+     * @return the created at
+     */
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getCreatedAt() {
+        return GitHubClient.parseInstant(createdAt);
+    }
+
+    /**
+     * Gets event.
+     *
+     * @return the event
+     */
+    public String getEvent() {
+        return event;
+    }
+
+    /**
+     * Gets id.
+     *
+     * @return the id
+     */
+    public long getId() {
+        return id;
+    }
+
+    /**
+     * Gets issue.
+     *
+     * @return the issue
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHIssue getIssue() {
+        return issue;
+    }
+
+    /**
+     * Get the {@link GHLabel} that was added to or removed from the issue. Only present for events "labeled" and
+     * "unlabeled", <code>null</code> otherwise.
+     *
+     * @return the label
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHLabel getLabel() {
+        return label;
+    }
+
+    /**
+     * Get the {@link GHMilestone} that this issue was added to or removed from. Only present for events "milestoned"
+     * and "demilestoned", <code>null</code> otherwise.
+     *
+     * @return the milestone
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHMilestone getMilestone() {
+        return milestone;
+    }
+
+    /**
+     * Gets node id.
+     *
+     * @return the node id
+     */
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    /**
      * Get the {@link GHIssueRename} that contains information about issue old and new name. Only present for event
      * "renamed", <code>null</code> otherwise.
      *
@@ -158,23 +154,6 @@ public class GHIssueEvent extends GitHubInteractiveObject {
      */
     public GHIssueRename getRename() {
         return this.rename;
-    }
-
-    /**
-     *
-     * Get the {@link GHUser} person who requested a review. Only present for events "review_requested",
-     * "review_request_removed", <code>null</code> otherwise.
-     *
-     * @return the GHUser
-     *
-     * @see <a href=
-     *      "https://docs.github.com/en/developers/webhooks-and-events/events/issue-event-types#review_requested">review_requested</a>
-     *      and <a href=
-     *      "https://docs.github.com/en/developers/webhooks-and-events/events/issue-event-types#review_request_removed">review_request_removed</a>
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHUser getReviewRequester() {
-        return this.reviewRequester;
     }
 
     /**
@@ -195,15 +174,29 @@ public class GHIssueEvent extends GitHubInteractiveObject {
     }
 
     /**
-     * Wrap up.
      *
-     * @param parent
-     *            the parent
-     * @return the GH issue event
+     * Get the {@link GHUser} person who requested a review. Only present for events "review_requested",
+     * "review_request_removed", <code>null</code> otherwise.
+     *
+     * @return the GHUser
+     *
+     * @see <a href=
+     *      "https://docs.github.com/en/developers/webhooks-and-events/events/issue-event-types#review_requested">review_requested</a>
+     *      and <a href=
+     *      "https://docs.github.com/en/developers/webhooks-and-events/events/issue-event-types#review_request_removed">review_request_removed</a>
      */
-    GHIssueEvent wrapUp(GHIssue parent) {
-        this.issue = parent;
-        return this;
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getReviewRequester() {
+        return this.reviewRequester;
+    }
+
+    /**
+     * Gets url.
+     *
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
     }
 
     /**
@@ -218,5 +211,17 @@ public class GHIssueEvent extends GitHubInteractiveObject {
                 getEvent(),
                 getActor().getLogin(),
                 getCreatedAt().toString());
+    }
+
+    /**
+     * Wrap up.
+     *
+     * @param parent
+     *            the parent
+     * @return the GH issue event
+     */
+    GHIssueEvent wrapUp(GHIssue parent) {
+        this.issue = parent;
+        return this;
     }
 }

@@ -2,8 +2,6 @@ package org.kohsuke.github;
 
 import javax.annotation.Nonnull;
 
-import static org.kohsuke.github.internal.Previews.MACHINE_MAN;
-
 // TODO: Auto-generated Javadoc
 /**
  * The Github App Installation corresponding to the installation token used in a client.
@@ -11,6 +9,15 @@ import static org.kohsuke.github.internal.Previews.MACHINE_MAN;
  * @see GitHub#getInstallation() GitHub#getAuthenticatedAppInstallation()
  */
 public class GHAuthenticatedAppInstallation extends GitHubInteractiveObject {
+
+    private static class GHAuthenticatedAppInstallationRepositoryResult extends SearchResult<GHRepository> {
+        private GHRepository[] repositories;
+
+        @Override
+        GHRepository[] getItems(GitHub root) {
+            return repositories;
+        }
+    }
 
     /**
      * Instantiates a new GH authenticated app installation.
@@ -27,22 +34,12 @@ public class GHAuthenticatedAppInstallation extends GitHubInteractiveObject {
      *
      * @return the paged iterable
      */
-    @Preview(MACHINE_MAN)
     public PagedSearchIterable<GHRepository> listRepositories() {
         GitHubRequest request;
 
-        request = root().createRequest().withPreview(MACHINE_MAN).withUrlPath("/installation/repositories").build();
+        request = root().createRequest().withUrlPath("/installation/repositories").build();
 
         return new PagedSearchIterable<>(root(), request, GHAuthenticatedAppInstallationRepositoryResult.class);
-    }
-
-    private static class GHAuthenticatedAppInstallationRepositoryResult extends SearchResult<GHRepository> {
-        private GHRepository[] repositories;
-
-        @Override
-        GHRepository[] getItems(GitHub root) {
-            return repositories;
-        }
     }
 
 }

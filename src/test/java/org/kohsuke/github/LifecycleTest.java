@@ -19,6 +19,12 @@ import static org.hamcrest.Matchers.*;
 public class LifecycleTest extends AbstractGitHubWireMockTest {
 
     /**
+     * Create default LifecycleTest instance
+     */
+    public LifecycleTest() {
+    }
+
+    /**
      * Test create repository.
      *
      * @throws IOException
@@ -32,7 +38,7 @@ public class LifecycleTest extends AbstractGitHubWireMockTest {
         // GHOrganization org = gitHub.getOrganization(GITHUB_API_TEST_ORG);
 
         GHRepository repository = getTempRepository();
-        assertThat(repository.getReleases(), is(empty()));
+        assertThat(repository.listReleases().toList(), is(empty()));
 
         GHMilestone milestone = repository.createMilestone("Initial Release", "first one");
         GHIssue issue = repository.createIssue("Test Issue")
@@ -53,33 +59,15 @@ public class LifecycleTest extends AbstractGitHubWireMockTest {
         deleteAsset(release, asset);
     }
 
-    private void updateAsset(GHRelease release, GHAsset asset) throws IOException {
-        asset.setLabel("test label");
-        assertThat(release.getAssets().get(0).getLabel(), equalTo("test label"));
-    }
-
-    private void deleteAsset(GHRelease release, GHAsset asset) throws IOException {
-        asset.delete();
-        assertThat(release.getAssets(), is(empty()));
-    }
-
-    private GHAsset uploadAsset(GHRelease release) throws IOException {
-        GHAsset asset = release.uploadAsset(new File("LICENSE.txt"), "application/text");
-        assertThat(asset, notNullValue());
-        List<GHAsset> cachedAssets = release.assets();
-        assertThat(cachedAssets, is(empty()));
-        List<GHAsset> assets = release.getAssets();
-        assertThat(assets.size(), equalTo(1));
-        assertThat(assets.get(0).getName(), equalTo("LICENSE.txt"));
-        assertThat(assets.get(0).getSize(), equalTo(1104L));
-        assertThat(assets.get(0).getContentType(), equalTo("application/text"));
-        assertThat(assets.get(0).getState(), equalTo("uploaded"));
-        assertThat(assets.get(0).getDownloadCount(), equalTo(0L));
-        assertThat(assets.get(0).getOwner(), sameInstance(release.getOwner()));
-        assertThat(assets.get(0).getBrowserDownloadUrl(),
-                containsString("/temp-testCreateRepository/releases/download/release_tag/LICENSE.txt"));
-
-        return asset;
+    private File createDummyFile(File repoDir) throws IOException {
+        File file = new File(repoDir, "testFile-" + System.currentTimeMillis());
+        PrintWriter writer = new PrintWriter(new FileWriter(file));
+        try {
+            writer.println("test file");
+        } finally {
+            writer.close();
+        }
+        return file;
     }
 
     private GHRelease createRelease(GHRepository repository) throws IOException {
@@ -87,7 +75,7 @@ public class LifecycleTest extends AbstractGitHubWireMockTest {
                 .name("Test Release")
                 .body("How exciting!  To be able to programmatically create releases is a dream come true!")
                 .create();
-        List<GHRelease> releases = repository.getReleases();
+        List<GHRelease> releases = repository.listReleases().toList();
         assertThat(releases.size(), equalTo(1));
         GHRelease release = releases.get(0);
         assertThat(release.getName(), equalTo("Test Release"));
@@ -113,14 +101,32 @@ public class LifecycleTest extends AbstractGitHubWireMockTest {
         toDelete.delete();
     }
 
-    private File createDummyFile(File repoDir) throws IOException {
-        File file = new File(repoDir, "testFile-" + System.currentTimeMillis());
-        PrintWriter writer = new PrintWriter(new FileWriter(file));
-        try {
-            writer.println("test file");
-        } finally {
-            writer.close();
-        }
-        return file;
+    private void deleteAsset(GHRelease release, GHAsset asset) throws IOException {
+        asset.delete();
+        assertThat(release.listAssets().toList(), is(empty()));
+    }
+
+    private void updateAsset(GHRelease release, GHAsset asset) throws IOException {
+        asset.setLabel("test label");
+        assertThat(release.listAssets().toList().get(0).getLabel(), equalTo("test label"));
+    }
+
+    private GHAsset uploadAsset(GHRelease release) throws IOException {
+        GHAsset asset = release.uploadAsset(new File("LICENSE.txt"), "application/text");
+        assertThat(asset, notNullValue());
+        List<GHAsset> cachedAssets = release.getAssets();
+        assertThat(cachedAssets, is(empty()));
+        List<GHAsset> assets = release.listAssets().toList();
+        assertThat(assets.size(), equalTo(1));
+        assertThat(assets.get(0).getName(), equalTo("LICENSE.txt"));
+        assertThat(assets.get(0).getSize(), equalTo(1104L));
+        assertThat(assets.get(0).getContentType(), equalTo("application/text"));
+        assertThat(assets.get(0).getState(), equalTo("uploaded"));
+        assertThat(assets.get(0).getDownloadCount(), equalTo(0L));
+        assertThat(assets.get(0).getOwner(), sameInstance(release.getOwner()));
+        assertThat(assets.get(0).getBrowserDownloadUrl(),
+                containsString("/temp-testCreateRepository/releases/download/release_tag/LICENSE.txt"));
+
+        return asset;
     }
 }

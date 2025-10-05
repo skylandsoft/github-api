@@ -19,8 +19,6 @@ import org.kohsuke.github.GitHub;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.fail;
-
 // TODO: Auto-generated Javadoc
 /**
  * Test showing the behavior of OkHttpGitHubConnector cache with GitHub 404 responses.
@@ -29,27 +27,20 @@ import static org.junit.Assert.fail;
  */
 public class GitHubCachingTest extends AbstractGitHubWireMockTest {
 
-    /**
-     * Instantiates a new git hub caching test.
-     */
-    public GitHubCachingTest() {
-        useDefaultGitHub = false;
+    private static int clientCount = 0;
+
+    private static GHRepository getRepository(GitHub gitHub) throws IOException {
+        return gitHub.getOrganization("hub4j-test-org").getRepository("github-api");
     }
 
     /** The test ref name. */
     String testRefName = "heads/test/content_ref_cache";
 
     /**
-     * Gets the wire mock options.
-     *
-     * @return the wire mock options
+     * Instantiates a new git hub caching test.
      */
-    @Override
-    protected WireMockConfiguration getWireMockOptions() {
-        return super.getWireMockOptions()
-                // Use the same data files as the 2.x test
-                .usingFilesUnderDirectory(baseRecordPath.replace("/okhttp3/", "/"))
-                .extensions(templating.newResponseTransformer());
+    public GitHubCachingTest() {
+        useDefaultGitHub = false;
     }
 
     /**
@@ -61,7 +52,10 @@ public class GitHubCachingTest extends AbstractGitHubWireMockTest {
     @Before
     public void setupRepo() throws Exception {
         if (mockGitHub.isUseProxy()) {
-            for (GHPullRequest pr : getRepository(this.getNonRecordingGitHub()).getPullRequests(GHIssueState.OPEN)) {
+            for (GHPullRequest pr : getRepository(this.getNonRecordingGitHub()).queryPullRequests()
+                    .state(GHIssueState.OPEN)
+                    .list()
+                    .toList()) {
                 pr.close();
             }
             try {
@@ -184,8 +178,6 @@ public class GitHubCachingTest extends AbstractGitHubWireMockTest {
         repo.getRef(testRefName);
     }
 
-    private static int clientCount = 0;
-
     private OkHttpClient createClient(boolean useCache) throws IOException {
         OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
 
@@ -202,8 +194,17 @@ public class GitHubCachingTest extends AbstractGitHubWireMockTest {
         return builder.build();
     }
 
-    private static GHRepository getRepository(GitHub gitHub) throws IOException {
-        return gitHub.getOrganization("hub4j-test-org").getRepository("github-api");
+    /**
+     * Gets the wire mock options.
+     *
+     * @return the wire mock options
+     */
+    @Override
+    protected WireMockConfiguration getWireMockOptions() {
+        return super.getWireMockOptions()
+                // Use the same data files as the 2.x test
+                .usingFilesUnderDirectory(baseRecordPath.replace("/okhttp3/", "/"))
+                .extensions(templating.newResponseTransformer());
     }
 
 }

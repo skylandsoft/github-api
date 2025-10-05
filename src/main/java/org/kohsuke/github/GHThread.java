@@ -1,10 +1,11 @@
 package org.kohsuke.github;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
+import java.time.Instant;
 import java.util.Date;
 
 // TODO: Auto-generated Javadoc
@@ -18,109 +19,45 @@ import java.util.Date;
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_FIELD", "NP_UNWRITTEN_FIELD" },
         justification = "JSON API")
 public class GHThread extends GHObject {
-    private GHRepository repository;
-    private Subject subject;
-    private String reason;
-    private boolean unread;
-    private String last_read_at;
-    private String url, subscription_url;
-
     /**
      * The Class Subject.
      */
-    static class Subject {
+    static class Subject extends GitHubBridgeAdapterObject {
+
+        /** The latest comment url. */
+        String latestCommentUrl;
 
         /** The title. */
         String title;
 
-        /** The url. */
-        String url;
-
-        /** The latest comment url. */
-        String latest_comment_url;
-
         /** The type. */
         String type;
+
+        /** The url. */
+        String url;
     }
+    private String lastReadAt;
+    private String reason;
+    private GHRepository repository;
+    private Subject subject;
+    private boolean unread;
+
+    private String url, subscriptionUrl;
 
     private GHThread() {// no external construction allowed
     }
 
     /**
-     * Returns null if the entire thread has never been read.
+     * If this thread is about a commit, return that commit.
      *
-     * @return the last read at
+     * @return null if this thread is not about a commit.
+     * @throws IOException
+     *             the io exception
      */
-    public Date getLastReadAt() {
-        return GitHubClient.parseDate(last_read_at);
-    }
-
-    /**
-     * Gets the html url.
-     *
-     * @return the html url
-     * @deprecated This object has no HTML URL.
-     */
-    @Override
-    public URL getHtmlUrl() {
-        return null;
-    }
-
-    /**
-     * Gets reason.
-     *
-     * @return the reason
-     */
-    public String getReason() {
-        return reason;
-    }
-
-    /**
-     * Gets repository.
-     *
-     * @return the repository
-     */
-    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
-    public GHRepository getRepository() {
-        return repository;
-    }
-
-    // TODO: how to expose the subject?
-
-    /**
-     * Is read boolean.
-     *
-     * @return the boolean
-     */
-    public boolean isRead() {
-        return !unread;
-    }
-
-    /**
-     * Gets title.
-     *
-     * @return the title
-     */
-    public String getTitle() {
-        return subject.title;
-    }
-
-    /**
-     * Gets type.
-     *
-     * @return the type
-     */
-    public String getType() {
-        return subject.type;
-    }
-
-    /**
-     * Gets last comment url.
-     *
-     * @return the last comment url
-     */
-    public String getLastCommentUrl() {
-        return subject.latest_comment_url;
+    public GHCommit getBoundCommit() throws IOException {
+        if (!"Commit".equals(subject.type))
+            return null;
+        return repository.getCommit(subject.url.substring(subject.url.lastIndexOf('/') + 1));
     }
 
     /**
@@ -149,17 +86,86 @@ public class GHThread extends GHObject {
         return repository.getPullRequest(Integer.parseInt(subject.url.substring(subject.url.lastIndexOf('/') + 1)));
     }
 
+    // TODO: how to expose the subject?
+
     /**
-     * If this thread is about a commit, return that commit.
+     * Gets last comment url.
      *
-     * @return null if this thread is not about a commit.
+     * @return the last comment url
+     */
+    public String getLastCommentUrl() {
+        return subject.latestCommentUrl;
+    }
+
+    /**
+     * Returns null if the entire thread has never been read.
+     *
+     * @return the last read at
+     */
+    @WithBridgeMethods(value = Date.class, adapterMethod = "instantToDate")
+    public Instant getLastReadAt() {
+        return GitHubClient.parseInstant(lastReadAt);
+    }
+
+    /**
+     * Gets reason.
+     *
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * Gets repository.
+     *
+     * @return the repository
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHRepository getRepository() {
+        return repository;
+    }
+
+    /**
+     * Returns the current subscription for this thread.
+     *
+     * @return null if no subscription exists.
      * @throws IOException
      *             the io exception
      */
-    public GHCommit getBoundCommit() throws IOException {
-        if (!"Commit".equals(subject.type))
+    public GHSubscription getSubscription() throws IOException {
+        try {
+            return root().createRequest().method("POST").withUrlPath(subscriptionUrl).fetch(GHSubscription.class);
+        } catch (FileNotFoundException e) {
             return null;
-        return repository.getCommit(subject.url.substring(subject.url.lastIndexOf('/') + 1));
+        }
+    }
+
+    /**
+     * Gets title.
+     *
+     * @return the title
+     */
+    public String getTitle() {
+        return subject.title;
+    }
+
+    /**
+     * Gets type.
+     *
+     * @return the type
+     */
+    public String getType() {
+        return subject.type;
+    }
+
+    /**
+     * Is read boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isRead() {
+        return !unread;
     }
 
     /**
@@ -188,22 +194,7 @@ public class GHThread extends GHObject {
                 .method("PUT")
                 .with("subscribed", subscribed)
                 .with("ignored", ignored)
-                .withUrlPath(subscription_url)
+                .withUrlPath(subscriptionUrl)
                 .fetch(GHSubscription.class);
-    }
-
-    /**
-     * Returns the current subscription for this thread.
-     *
-     * @return null if no subscription exists.
-     * @throws IOException
-     *             the io exception
-     */
-    public GHSubscription getSubscription() throws IOException {
-        try {
-            return root().createRequest().method("POST").withUrlPath(subscription_url).fetch(GHSubscription.class);
-        } catch (FileNotFoundException e) {
-            return null;
-        }
     }
 }

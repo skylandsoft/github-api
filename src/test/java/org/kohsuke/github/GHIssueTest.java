@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.time.temporal.ChronoUnit;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -30,184 +30,9 @@ import static org.hamcrest.Matchers.nullValue;
 public class GHIssueTest extends AbstractGitHubWireMockTest {
 
     /**
-     * Clean up.
-     *
-     * @throws Exception
-     *             the exception
+     * Create default GHIssueTest instance
      */
-    @Before
-    @After
-    public void cleanUp() throws Exception {
-        // Cleanup is only needed when proxying
-        if (!mockGitHub.isUseProxy()) {
-            return;
-        }
-
-        for (GHIssue issue : getRepository(this.getNonRecordingGitHub()).getIssues(GHIssueState.OPEN)) {
-            issue.close();
-        }
-    }
-
-    /**
-     * Creates the issue.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void createIssue() throws Exception {
-        String name = "createIssue";
-        GHRepository repo = getRepository();
-        GHIssue issue = repo.createIssue(name).body("## test").create();
-        assertThat(issue.getTitle(), equalTo(name));
-    }
-
-    /**
-     * Issue comment.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void issueComment() throws Exception {
-        String name = "createIssueComment";
-        GHIssue issue = getRepository().createIssue(name).body("## test").create();
-
-        List<GHIssueComment> comments;
-        comments = issue.listComments().toList();
-        assertThat(comments, hasSize(0));
-        comments = issue.queryComments().list().toList();
-        assertThat(comments, hasSize(0));
-
-        GHIssueComment firstComment = issue.comment("First comment");
-        Date firstCommentCreatedAt = firstComment.getCreatedAt();
-        Date firstCommentCreatedAtPlus1Second = Date
-                .from(firstComment.getCreatedAt().toInstant().plus(1, ChronoUnit.SECONDS));
-
-        comments = issue.listComments().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
-
-        comments = issue.queryComments().list().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
-
-        // Test "since"
-        comments = issue.queryComments().since(firstCommentCreatedAt).list().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
-        comments = issue.queryComments().since(firstCommentCreatedAtPlus1Second).list().toList();
-        assertThat(comments, hasSize(0));
-
-        // "since" is only precise up to the second,
-        // so if we want to differentiate comments, we need to be completely sure they're created
-        // at least 1 second from each other.
-        // Waiting 2 seconds to avoid edge cases.
-        Thread.sleep(2000);
-
-        GHIssueComment secondComment = issue.comment("Second comment");
-        Date secondCommentCreatedAt = secondComment.getCreatedAt();
-        Date secondCommentCreatedAtPlus1Second = Date
-                .from(secondComment.getCreatedAt().toInstant().plus(1, ChronoUnit.SECONDS));
-        assertThat(
-                "There's an error in the setup of this test; please fix it."
-                        + " The second comment should be created at least one second after the first one.",
-                firstCommentCreatedAtPlus1Second.getTime() <= secondCommentCreatedAt.getTime());
-
-        comments = issue.listComments().toList();
-        assertThat(comments, hasSize(2));
-        assertThat(comments,
-                contains(hasProperty("body", equalTo("First comment")),
-                        hasProperty("body", equalTo("Second comment"))));
-        comments = issue.queryComments().list().toList();
-        assertThat(comments, hasSize(2));
-        assertThat(comments,
-                contains(hasProperty("body", equalTo("First comment")),
-                        hasProperty("body", equalTo("Second comment"))));
-
-        // Test "since"
-        comments = issue.queryComments().since(firstCommentCreatedAt).list().toList();
-        assertThat(comments, hasSize(2));
-        assertThat(comments,
-                contains(hasProperty("body", equalTo("First comment")),
-                        hasProperty("body", equalTo("Second comment"))));
-        comments = issue.queryComments().since(firstCommentCreatedAtPlus1Second).list().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
-        comments = issue.queryComments().since(secondCommentCreatedAt).list().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
-        comments = issue.queryComments().since(secondCommentCreatedAtPlus1Second).list().toList();
-        assertThat(comments, hasSize(0));
-
-        // Test "since" with timestamp instead of Date
-        comments = issue.queryComments().since(secondCommentCreatedAt.getTime()).list().toList();
-        assertThat(comments, hasSize(1));
-        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
-    }
-
-    /**
-     * Close issue.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void closeIssue() throws Exception {
-        String name = "closeIssue";
-        GHIssue issue = getRepository().createIssue(name).body("## test").create();
-        assertThat(issue.getTitle(), equalTo(name));
-        assertThat(getRepository().getIssue(issue.getNumber()).getState(), equalTo(GHIssueState.OPEN));
-        issue.close();
-        GHIssue closedIssued = getRepository().getIssue(issue.getNumber());
-        assertThat(closedIssued.getState(), equalTo(GHIssueState.CLOSED));
-        assertThat(closedIssued.getStateReason(), equalTo(GHIssueStateReason.COMPLETED));
-    }
-
-    /**
-     * Close issue as not planned.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    public void closeIssueNotPlanned() throws Exception {
-        String name = "closeIssueNotPlanned";
-        GHIssue issue = getRepository().createIssue(name).body("## test").create();
-        assertThat(issue.getTitle(), equalTo(name));
-
-        GHIssue createdIssue = issue.getRepository().getIssue(issue.getNumber());
-
-        assertThat(createdIssue.getState(), equalTo(GHIssueState.OPEN));
-        assertThat(createdIssue.getStateReason(), nullValue());
-
-        issue.close(GHIssueStateReason.NOT_PLANNED);
-
-        GHIssue closedIssued = getRepository().getIssue(issue.getNumber());
-        assertThat(closedIssued.getState(), equalTo(GHIssueState.CLOSED));
-        assertThat(closedIssued.getStateReason(), equalTo(GHIssueStateReason.NOT_PLANNED));
-    }
-
-    /**
-     * Sets the labels.
-     *
-     * @throws Exception
-     *             the exception
-     */
-    @Test
-    // Requires push access to the test repo to pass
-    public void setLabels() throws Exception {
-        GHIssue issue = getRepository().createIssue("setLabels").body("## test").create();
-        String label = "setLabels_label_name";
-        issue.setLabels(label);
-
-        Collection<GHLabel> labels = getRepository().getIssue(issue.getNumber()).getLabels();
-        assertThat(labels.size(), equalTo(1));
-        GHLabel savedLabel = labels.iterator().next();
-        assertThat(savedLabel.getName(), equalTo(label));
-        assertThat(savedLabel.getId(), notNullValue());
-        assertThat(savedLabel.getNodeId(), notNullValue());
-        assertThat(savedLabel.isDefault(), is(false));
+    public GHIssueTest() {
     }
 
     /**
@@ -272,6 +97,182 @@ public class GHIssueTest extends AbstractGitHubWireMockTest {
     }
 
     /**
+     * Clean up.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Before
+    @After
+    public void cleanUp() throws Exception {
+        // Cleanup is only needed when proxying
+        if (!mockGitHub.isUseProxy()) {
+            return;
+        }
+
+        for (GHIssue issue : getRepository(this.getNonRecordingGitHub()).getIssues(GHIssueState.OPEN)) {
+            issue.close();
+        }
+    }
+
+    /**
+     * Close issue.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void closeIssue() throws Exception {
+        String name = "closeIssue";
+        GHIssue issue = getRepository().createIssue(name).body("## test").create();
+        assertThat(issue.getTitle(), equalTo(name));
+        assertThat(getRepository().getIssue(issue.getNumber()).getState(), equalTo(GHIssueState.OPEN));
+        issue.close();
+        GHIssue closedIssued = getRepository().getIssue(issue.getNumber());
+        assertThat(closedIssued.getState(), equalTo(GHIssueState.CLOSED));
+        assertThat(closedIssued.getStateReason(), equalTo(GHIssueStateReason.COMPLETED));
+    }
+
+    /**
+     * Close issue as not planned.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void closeIssueNotPlanned() throws Exception {
+        String name = "closeIssueNotPlanned";
+        GHIssue issue = getRepository().createIssue(name).body("## test").create();
+        assertThat(issue.getTitle(), equalTo(name));
+
+        GHIssue createdIssue = issue.getRepository().getIssue(issue.getNumber());
+
+        assertThat(createdIssue.getState(), equalTo(GHIssueState.OPEN));
+        assertThat(createdIssue.getStateReason(), nullValue());
+
+        issue.close(GHIssueStateReason.NOT_PLANNED);
+
+        GHIssue closedIssued = getRepository().getIssue(issue.getNumber());
+        assertThat(closedIssued.getState(), equalTo(GHIssueState.CLOSED));
+        assertThat(closedIssued.getStateReason(), equalTo(GHIssueStateReason.NOT_PLANNED));
+    }
+
+    /**
+     * Creates the issue.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void createIssue() throws Exception {
+        String name = "createIssue";
+        GHRepository repo = getRepository();
+        GHIssue issue = repo.createIssue(name).body("## test").create();
+        assertThat(issue.getTitle(), equalTo(name));
+    }
+
+    /**
+     * Gets the user test.
+     *
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @Test
+    public void getUserTest() throws IOException {
+        GHIssue issue = getRepository().createIssue("getUserTest").create();
+        GHIssue issueSingle = getRepository().getIssue(issue.getNumber());
+        assertThat(issueSingle.getUser().root(), notNullValue());
+
+        PagedIterable<GHIssue> ghIssues = getRepository().queryIssues().state(GHIssueState.OPEN).list();
+        for (GHIssue otherIssue : ghIssues) {
+            assertThat(otherIssue.getUser().root(), notNullValue());
+        }
+    }
+
+    /**
+     * Issue comment.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void issueComment() throws Exception {
+        String name = "createIssueComment";
+        GHIssue issue = getRepository().createIssue(name).body("## test").create();
+
+        List<GHIssueComment> comments;
+        comments = issue.listComments().toList();
+        assertThat(comments, hasSize(0));
+        comments = issue.queryComments().list().toList();
+        assertThat(comments, hasSize(0));
+
+        GHIssueComment firstComment = issue.comment("First comment");
+        Instant firstCommentCreatedAt = firstComment.getCreatedAt();
+        Instant firstCommentCreatedAtPlus1Second = firstComment.getCreatedAt().plusSeconds(1);
+
+        comments = issue.listComments().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
+        assertThat(comments.get(0).getAuthorAssociation(), equalTo(GHCommentAuthorAssociation.NONE));
+
+        comments = issue.queryComments().list().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
+
+        // Test "since"
+        comments = issue.queryComments().since(firstCommentCreatedAt).list().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("First comment"))));
+        comments = issue.queryComments().since(firstCommentCreatedAtPlus1Second).list().toList();
+        assertThat(comments, hasSize(0));
+
+        // "since" is only precise up to the second,
+        // so if we want to differentiate comments, we need to be completely sure they're created
+        // at least 1 second from each other.
+        // Waiting 2 seconds to avoid edge cases.
+        Thread.sleep(2000);
+
+        GHIssueComment secondComment = issue.comment("Second comment");
+        Instant secondCommentCreatedAt = secondComment.getCreatedAt();
+        Instant secondCommentCreatedAtPlus1Second = secondComment.getCreatedAt().plusSeconds(1);
+        assertThat(
+                "There's an error in the setup of this test; please fix it."
+                        + " The second comment should be created at least one second after the first one.",
+                firstCommentCreatedAtPlus1Second.isBefore(secondCommentCreatedAt));
+
+        comments = issue.listComments().toList();
+        assertThat(comments, hasSize(2));
+        assertThat(comments,
+                contains(hasProperty("body", equalTo("First comment")),
+                        hasProperty("body", equalTo("Second comment"))));
+        comments = issue.queryComments().list().toList();
+        assertThat(comments, hasSize(2));
+        assertThat(comments,
+                contains(hasProperty("body", equalTo("First comment")),
+                        hasProperty("body", equalTo("Second comment"))));
+
+        // Test "since"
+        comments = issue.queryComments().since(firstCommentCreatedAt).list().toList();
+        assertThat(comments, hasSize(2));
+        assertThat(comments,
+                contains(hasProperty("body", equalTo("First comment")),
+                        hasProperty("body", equalTo("Second comment"))));
+        comments = issue.queryComments().since(firstCommentCreatedAtPlus1Second).list().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
+        comments = issue.queryComments().since(Date.from(secondCommentCreatedAt)).list().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
+        comments = issue.queryComments().since(secondCommentCreatedAtPlus1Second).list().toList();
+        assertThat(comments, hasSize(0));
+
+        // Test "since" with timestamp instead of Date
+        comments = issue.queryComments().since(secondCommentCreatedAt.toEpochMilli()).list().toList();
+        assertThat(comments, hasSize(1));
+        assertThat(comments, contains(hasProperty("body", equalTo("Second comment"))));
+    }
+
+    /**
      * Removes the labels.
      *
      * @throws Exception
@@ -328,21 +329,29 @@ public class GHIssueTest extends AbstractGitHubWireMockTest {
     }
 
     /**
-     * Gets the user test.
+     * Sets the labels.
      *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
+     * @throws Exception
+     *             the exception
      */
     @Test
-    public void getUserTest() throws IOException {
-        GHIssue issue = getRepository().createIssue("getUserTest").create();
-        GHIssue issueSingle = getRepository().getIssue(issue.getNumber());
-        assertThat(issueSingle.getUser().root(), notNullValue());
+    // Requires push access to the test repo to pass
+    public void setLabels() throws Exception {
+        GHIssue issue = getRepository().createIssue("setLabels").body("## test").create();
+        String label = "setLabels_label_name";
+        issue.setLabels(label);
 
-        PagedIterable<GHIssue> ghIssues = getRepository().listIssues(GHIssueState.OPEN);
-        for (GHIssue otherIssue : ghIssues) {
-            assertThat(otherIssue.getUser().root(), notNullValue());
-        }
+        Collection<GHLabel> labels = getRepository().getIssue(issue.getNumber()).getLabels();
+        assertThat(labels.size(), equalTo(1));
+        GHLabel savedLabel = labels.iterator().next();
+        assertThat(savedLabel.getName(), equalTo(label));
+        assertThat(savedLabel.getId(), notNullValue());
+        assertThat(savedLabel.getNodeId(), notNullValue());
+        assertThat(savedLabel.isDefault(), is(false));
+    }
+
+    private GHRepository getRepository(GitHub gitHub) throws IOException {
+        return gitHub.getOrganization(GITHUB_API_TEST_ORG).getRepository("GHIssueTest");
     }
 
     /**
@@ -354,10 +363,6 @@ public class GHIssueTest extends AbstractGitHubWireMockTest {
      */
     protected GHRepository getRepository() throws IOException {
         return getRepository(gitHub);
-    }
-
-    private GHRepository getRepository(GitHub gitHub) throws IOException {
-        return gitHub.getOrganization(GITHUB_API_TEST_ORG).getRepository("GHIssueTest");
     }
 
 }

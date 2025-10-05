@@ -1,6 +1,5 @@
 package org.kohsuke.github;
 
-import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -18,14 +17,47 @@ import java.net.URL;
  */
 public class GHRepositoryDiscussionComment extends GHObject {
 
+    private GHCommentAuthorAssociation authorAssociation;
+
+    private String body;
+
+    private int childCommentCount;
     private String htmlUrl;
 
     private Long parentId;
-    private int childCommentCount;
-
     private GHUser user;
-    private GHCommentAuthorAssociation authorAssociation;
-    private String body;
+    /**
+     * Create default GHRepositoryDiscussionComment instance
+     */
+    public GHRepositoryDiscussionComment() {
+    }
+
+    /**
+     * Gets the author association.
+     *
+     * @return the author association
+     */
+    public GHCommentAuthorAssociation getAuthorAssociation() {
+        return authorAssociation;
+    }
+
+    /**
+     * Gets the body.
+     *
+     * @return the body
+     */
+    public String getBody() {
+        return body;
+    }
+
+    /**
+     * Gets the number of child comments.
+     *
+     * @return the number of child comments
+     */
+    public int getChildCommentCount() {
+        return childCommentCount;
+    }
 
     /**
      * Gets the html url.
@@ -46,40 +78,11 @@ public class GHRepositoryDiscussionComment extends GHObject {
     }
 
     /**
-     * Gets the number of child comments.
-     *
-     * @return the number of child comments
-     */
-    public int getChildCommentCount() {
-        return childCommentCount;
-    }
-
-    /**
      * Gets the user.
      *
      * @return the user
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
      */
-    public GHUser getUser() throws IOException {
+    public GHUser getUser() {
         return root().intern(user);
-    }
-
-    /**
-     * Gets the author association.
-     *
-     * @return the author association
-     */
-    public GHCommentAuthorAssociation getAuthorAssociation() {
-        return authorAssociation;
-    }
-
-    /**
-     * Gets the body.
-     *
-     * @return the body
-     */
-    public String getBody() {
-        return body;
     }
 }
