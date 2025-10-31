@@ -2693,6 +2693,18 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Lists all the commits.
+     *
+     * @return the paged iterable
+     */
+    public PagedIterable<GHCommit> listCommits(final String shaOrBranchRef) {
+        return root().createRequest()
+                .withUrlPath(String.format("/repos/%s/%s/commits", getOwnerName(), name))
+                .with("sha", shaOrBranchRef)
+                .toIterable(GHCommit[].class, item -> item.wrapUp(this));
+    }
+
+    /**
      * List contributors paged iterable.
      *
      * @return the paged iterable

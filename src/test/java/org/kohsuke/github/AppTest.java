@@ -991,6 +991,22 @@ public class AppTest extends AbstractGitHubWireMockTest {
     }
 
     /**
+     * Test list commits.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testListCommitsWithBranchRef() throws Exception {
+        List<String> sha1 = new ArrayList<String>();
+        for (GHCommit c : gitHub.getUser("kohsuke").getRepository("empty-commit").listCommits("main")) {
+            sha1.add(c.getSHA1());
+        }
+        assertThat(sha1.get(0), equalTo("fdfad6be4db6f96faea1f153fb447b479a7a9cb7"));
+        assertThat(sha1.size(), equalTo(1));
+    }
+
+    /**
      * Test list issues.
      *
      * @throws IOException
