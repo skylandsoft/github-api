@@ -76,7 +76,7 @@
     <spotbugs-maven-plugin.failOnError>true</spotbugs-maven-plugin.failOnError>
     <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
     <spotbugs.version>4.8.6</spotbugs.version>
-    <spring.boot.version>3.3.5</spring.boot.version>
+    <spring.boot.version>3.4.5</spring.boot.version>
     <surefire.argLine></surefire.argLine>
   </properties>
 
@@ -190,7 +190,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.18.0</version>
+      <version>3.19.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.npathai</groupId>
