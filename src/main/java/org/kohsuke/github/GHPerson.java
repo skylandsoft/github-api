@@ -253,7 +253,7 @@ public abstract class GHPerson extends GHObject {
     }
 
     /**
-     * Gets the type. This is either "User" or "Organization".
+     * Gets the type. This is either "User" or "Organization" or "Bot".
      *
      * @return the type
      * @throws IOException
@@ -342,6 +342,9 @@ public abstract class GHPerson extends GHObject {
         }
         if (isOffline()) {
             return; // cannot populate, will have to live with what we have
+        }
+        if ("Bot".equalsIgnoreCase(type)) {
+            return; // cannot populate bot accounts
         }
         URL url = getUrl();
         if (url != null) {
