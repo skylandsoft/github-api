@@ -1925,6 +1925,16 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Gets owner without populating the full object.
+     *
+     * @return the partially populated owner
+     */
+    @SuppressFBWarnings(value = { "EI_EXPOSE_REP" }, justification = "Expected behavior")
+    public GHUser getRawOwner() {
+        return owner;
+    }
+
+    /**
      * https://developer.github.com/v3/repos/contents/#get-the-readme
      *
      * @return the readme

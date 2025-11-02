@@ -555,11 +555,8 @@ public class GHPullRequest extends GHIssue implements Refreshable {
      * Is draft boolean.
      *
      * @return the boolean
-     * @throws IOException
-     *             the io exception
      */
-    public boolean isDraft() throws IOException {
-        populate();
+    public boolean isDraft() {
         return draft;
     }
 
