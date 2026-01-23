@@ -400,8 +400,8 @@ public class GHIssueTest extends AbstractGitHubWireMockTest {
         // Example assertions (commented out as they depend on actual GitHub sub-issues setup):
         // assertThat(subIssues, hasSize(2));
         // assertThat(subIssues, containsInAnyOrder(
-        //     hasProperty("number", equalTo(subIssue1.getNumber())),
-        //     hasProperty("number", equalTo(subIssue2.getNumber()))
+        // hasProperty("number", equalTo(subIssue1.getNumber())),
+        // hasProperty("number", equalTo(subIssue2.getNumber()))
         // ));
     }
 
