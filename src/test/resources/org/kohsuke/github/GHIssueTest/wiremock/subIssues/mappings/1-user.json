@@ -1,0 +1,30 @@
+{
+  "id": "94b1a0f5-d8cd-4856-b6a9-28870940add7",
+  "name": "user",
+  "request": {
+    "url": "/user",
+    "method": "GET",
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.github+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "1-user.json",
+    "headers": {
+      "Server": "GitHub.com",
+      "Date": "{{now format='EEE, dd MMM yyyy HH:mm:ss' timezone='GMT'}} GMT",
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "private, max-age=60, s-maxage=60",
+      "X-GitHub-Media-Type": "github.v3; format=json",
+      "X-RateLimit-Limit": "5000",
+      "X-RateLimit-Remaining": "4999",
+      "X-RateLimit-Resource": "core"
+    }
+  },
+  "uuid": "94b1a0f5-d8cd-4856-b6a9-28870940add7",
+  "persistent": true,
+  "insertionIndex": 1
+}

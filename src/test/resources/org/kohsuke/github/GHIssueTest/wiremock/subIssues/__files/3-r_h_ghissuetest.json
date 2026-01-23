@@ -1,0 +1,43 @@
+{
+  "id": 539903172,
+  "node_id": "R_kgDOIC5ExA",
+  "name": "GHIssueTest",
+  "full_name": "hub4j-test-org/GHIssueTest",
+  "private": true,
+  "owner": {
+    "login": "hub4j-test-org",
+    "id": 7544739,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjc1NDQ3Mzk=",
+    "avatar_url": "https://avatars.githubusercontent.com/u/7544739?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/hub4j-test-org",
+    "html_url": "https://github.com/hub4j-test-org",
+    "followers_url": "https://api.github.com/users/hub4j-test-org/followers",
+    "following_url": "https://api.github.com/users/hub4j-test-org/following{/other_user}",
+    "gists_url": "https://api.github.com/users/hub4j-test-org/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/hub4j-test-org/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/hub4j-test-org/subscriptions",
+    "organizations_url": "https://api.github.com/users/hub4j-test-org/orgs",
+    "repos_url": "https://api.github.com/users/hub4j-test-org/repos",
+    "events_url": "https://api.github.com/users/hub4j-test-org/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/hub4j-test-org/received_events",
+    "type": "Organization",
+    "site_admin": false
+  },
+  "html_url": "https://github.com/hub4j-test-org/GHIssueTest",
+  "description": "Repository used by GHIssueTest",
+  "fork": false,
+  "url": "https://api.github.com/repos/hub4j-test-org/GHIssueTest",
+  "has_issues": true,
+  "has_projects": true,
+  "has_wiki": true,
+  "has_pages": false,
+  "default_branch": "main",
+  "permissions": {
+    "admin": true,
+    "maintain": true,
+    "push": true,
+    "triage": true,
+    "pull": true
+  }
+}

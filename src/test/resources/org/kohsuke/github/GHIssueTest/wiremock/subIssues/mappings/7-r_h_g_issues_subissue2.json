@@ -1,0 +1,35 @@
+{
+  "id": "8ccd6a33-f9c0-60bd-d44e-bb6bf2e04041",
+  "name": "repos_hub4j-test-org_ghissuetest_issues_subissue2",
+  "request": {
+    "url": "/repos/hub4j-test-org/GHIssueTest/issues",
+    "method": "POST",
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.github+json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.title == 'subIssue2')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "bodyFileName": "7-r_h_g_issues_subissue2.json",
+    "headers": {
+      "Server": "GitHub.com",
+      "Date": "{{now format='EEE, dd MMM yyyy HH:mm:ss' timezone='GMT'}} GMT",
+      "Content-Type": "application/json; charset=utf-8",
+      "X-GitHub-Media-Type": "github.v3; format=json",
+      "X-RateLimit-Limit": "5000",
+      "X-RateLimit-Remaining": "4992",
+      "X-RateLimit-Resource": "core",
+      "Location": "https://api.github.com/repos/hub4j-test-org/GHIssueTest/issues/102"
+    }
+  },
+  "uuid": "8ccd6a33-f9c0-60bd-d44e-bb6bf2e04041",
+  "persistent": true,
+  "insertionIndex": 7
+}

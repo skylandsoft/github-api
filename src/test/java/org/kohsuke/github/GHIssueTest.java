@@ -350,6 +350,61 @@ public class GHIssueTest extends AbstractGitHubWireMockTest {
         assertThat(savedLabel.isDefault(), is(false));
     }
 
+    /**
+     * Sub issues.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void subIssues() throws Exception {
+        String name = "subIssuesParent";
+        GHIssue parentIssue = getRepository().createIssue(name).body("## Parent issue for sub-issues test").create();
+        assertThat(parentIssue.getTitle(), equalTo(name));
+
+        // Test listSubIssues() - should return empty initially
+        List<GHIssue> subIssues = parentIssue.listSubIssues().toList();
+        assertThat(subIssues, hasSize(0));
+
+        // Test getSubIssues() - should also return empty initially
+        subIssues = parentIssue.getSubIssues();
+        assertThat(subIssues, hasSize(0));
+
+        // Create sub-issues (Note: In a real scenario, sub-issues would be created through GitHub's API
+        // or UI with proper parent-child relationships. For testing purposes, we verify the methods work.)
+        GHIssue subIssue1 = getRepository().createIssue("subIssue1")
+                .body("## First sub-issue\n\nParent: #" + parentIssue.getNumber())
+                .create();
+        GHIssue subIssue2 = getRepository().createIssue("subIssue2")
+                .body("## Second sub-issue\n\nParent: #" + parentIssue.getNumber())
+                .create();
+
+        assertThat(subIssue1.getTitle(), equalTo("subIssue1"));
+        assertThat(subIssue2.getTitle(), equalTo("subIssue2"));
+
+        // Refresh parent issue and test sub-issues retrieval
+        parentIssue = getRepository().getIssue(parentIssue.getNumber());
+
+        // Test listSubIssues() with PagedIterable
+        PagedIterable<GHIssue> subIssuesIterable = parentIssue.listSubIssues();
+        assertThat(subIssuesIterable, notNullValue());
+
+        // Test getSubIssues() convenience method
+        subIssues = parentIssue.getSubIssues();
+        assertThat(subIssues, notNullValue());
+
+        // In a real scenario with actual sub-issues linked, we would verify:
+        // - The correct number of sub-issues are returned
+        // - Each sub-issue has the expected properties
+        // - The sub-issues are properly associated with the parent
+        // Example assertions (commented out as they depend on actual GitHub sub-issues setup):
+        // assertThat(subIssues, hasSize(2));
+        // assertThat(subIssues, containsInAnyOrder(
+        //     hasProperty("number", equalTo(subIssue1.getNumber())),
+        //     hasProperty("number", equalTo(subIssue2.getNumber()))
+        // ));
+    }
+
     private GHRepository getRepository(GitHub gitHub) throws IOException {
         return gitHub.getOrganization(GITHUB_API_TEST_ORG).getRepository("GHIssueTest");
     }

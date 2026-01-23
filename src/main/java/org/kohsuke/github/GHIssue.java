@@ -605,6 +605,30 @@ public class GHIssue extends GHObject implements Reactable {
     }
 
     /**
+     * Lists sub-issues for this issue.
+     *
+     * @return the paged iterable of sub-issues
+     * @see <a href="https://docs.github.com/en/rest/issues/sub-issues?apiVersion=2022-11-28#list-sub-issues">List sub-issues for an issue</a>
+     */
+    public PagedIterable<GHIssue> listSubIssues() {
+        return root().createRequest()
+                .withUrlPath(getIssuesApiRoute() + "/sub_issues")
+                .toIterable(GHIssue[].class, item -> item.wrap(owner));
+    }
+
+    /**
+     * Gets all sub-issues for this issue.
+     *
+     * @return the list of sub-issues
+     * @throws IOException
+     *             the io exception
+     * @see #listSubIssues() #listSubIssues()
+     */
+    public List<GHIssue> getSubIssues() throws IOException {
+        return listSubIssues().toList();
+    }
+
+    /**
      * Lock.
      *
      * @throws IOException
