@@ -409,12 +409,6 @@ public class GitHub {
                 abuseLimitHandler,
                 rateLimitChecker,
                 authorizationProvider);
-
-        // Ensure we have the login if it is available
-        // This preserves previously existing behavior. Consider removing in future.
-        if (authorizationProvider instanceof LoginLoadingUserAuthorizationProvider) {
-            ((LoginLoadingUserAuthorizationProvider) authorizationProvider).getLogin();
-        }
     }
 
     /**
