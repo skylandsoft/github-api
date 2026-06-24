@@ -40,11 +40,42 @@ import java.net.URL;
  */
 public class GHIssueComment extends GHObject implements Reactable {
 
-    private String body, gravatarId, htmlUrl, authorAssociation;
+    /**
+     * Legacy field for gravatar ID (no longer returned by GitHub API).
+     */
+    private String gravatarId;
 
-    private long inReplyToId;
+    /**
+     * The author's association with the repository.
+     */
+    protected String authorAssociation;
 
-    private GHUser user; // not fully populated. beware.
+    /**
+     * The comment body.
+     */
+    protected String body;
+
+    /**
+     * The comment body in HTML format.
+     */
+    protected String bodyHtml;
+
+    /**
+     * The comment body in plain text format.
+     */
+    protected String bodyText;
+
+    /**
+     * The HTML URL of the comment.
+     */
+    protected String htmlUrl;
+
+    /**
+     * The user who created the comment. Note: not fully populated, use getUser() for full details.
+     */
+    protected GHUser user;
+
+    protected long inReplyToId;
 
     /** The owner. */
     GHIssue owner;
@@ -117,6 +148,24 @@ public class GHIssueComment extends GHObject implements Reactable {
      */
     public String getBody() {
         return body;
+    }
+
+    /**
+     * Gets the body in HTML format.
+     *
+     * @return the body in HTML format
+     */
+    public String getBodyHtml() {
+        return bodyHtml;
+    }
+
+    /**
+     * Gets the body in plain text format.
+     *
+     * @return the body in plain text format
+     */
+    public String getBodyText() {
+        return bodyText;
     }
 
     /**
