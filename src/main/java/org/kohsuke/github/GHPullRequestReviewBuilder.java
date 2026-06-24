@@ -1,5 +1,7 @@
 package org.kohsuke.github;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,11 +113,18 @@ public class GHPullRequestReviewBuilder {
         private final String body;
         private final int line;
         private final String path;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private final String side;
 
         SingleLineDraftReviewComment(final String body, final String path, final int line) {
+            this(body, path, line, null);
+        }
+
+        SingleLineDraftReviewComment(final String body, final String path, final int line, final String side) {
             this.body = body;
             this.path = path;
             this.line = line;
+            this.side = side;
         }
 
         public String getBody() {
@@ -134,10 +143,26 @@ public class GHPullRequestReviewBuilder {
         public String getPath() {
             return this.path;
         }
+
+        /**
+         * Gets the side of the diff the comment applies to (LEFT or RIGHT), or null for the default.
+         *
+         * @return the side of the comment.
+         */
+        public String getSide() {
+            return side;
+        }
     }
 
     // public GHPullRequestReview createReview(@Nullable String commitId, String body, GHPullRequestReviewEvent event,
     // List<GHPullRequestReviewComment> comments) throws IOException
+
+    private static String toSideValue(GHPullRequestReviewComment.Side side) {
+        if (side == null || side == GHPullRequestReviewComment.Side.UNKNOWN) {
+            return null;
+        }
+        return side.name();
+    }
 
     private final Requester builder;
 
@@ -260,6 +285,28 @@ public class GHPullRequestReviewBuilder {
      */
     public GHPullRequestReviewBuilder singleLineComment(String body, String path, int line) {
         this.comments.add(new SingleLineDraftReviewComment(body, path, line));
+        return this;
+    }
+
+    /**
+     * Add a single line comment on a specific side of the diff to the gh pull request review builder.
+     *
+     * @param body
+     *            Text of the review comment.
+     * @param path
+     *            The relative path to the file that necessitates a review comment.
+     * @param line
+     *            The line of the blob in the pull request diff that the comment applies to.
+     * @param side
+     *            The side of the diff the comment applies to: {@code RIGHT} for additions/context in the new file,
+     *            {@code LEFT} for deletions in the old file. When null, GitHub defaults to {@code RIGHT}.
+     * @return the gh pull request review builder
+     */
+    public GHPullRequestReviewBuilder singleLineComment(String body,
+            String path,
+            int line,
+            GHPullRequestReviewComment.Side side) {
+        this.comments.add(new SingleLineDraftReviewComment(body, path, line, toSideValue(side)));
         return this;
     }
 }

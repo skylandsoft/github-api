@@ -70,12 +70,12 @@ public class GHIssueComment extends GHObject implements Reactable {
      */
     protected String htmlUrl;
 
+    protected long inReplyToId;
+
     /**
      * The user who created the comment. Note: not fully populated, use getUser() for full details.
      */
     protected GHUser user;
-
-    protected long inReplyToId;
 
     /** The owner. */
     GHIssue owner;
