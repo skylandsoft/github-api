@@ -267,6 +267,64 @@ public class GHOrganization extends GHPerson {
     }
 
     /**
+     * Gets the billing usage report of this organization for a month.
+     *
+     * @param year
+     *            the year of the report
+     * @param month
+     *            the month of the report (1-12)
+     * @return the billing usage report
+     * @throws IOException
+     *             the io exception
+     * @see <a href=
+     *      "https://docs.github.com/en/rest/billing/usage?apiVersion=2022-11-28#get-billing-usage-report-for-an-organization">documentation</a>
+     */
+    public GHBillingUsageReport getBillingUsage(int year, int month) throws IOException {
+        return root().createRequest()
+                .withUrlPath("/organizations/" + login + "/settings/billing/usage")
+                .with("year", year)
+                .with("month", month)
+                .fetch(GHBillingUsageReport.class);
+    }
+
+    /**
+     * Gets the billing usage report of this organization for a day.
+     *
+     * @param year
+     *            the year of the report
+     * @param month
+     *            the month of the report (1-12)
+     * @param day
+     *            the day of the report (1-31)
+     * @return the billing usage report
+     * @throws IOException
+     *             the io exception
+     * @see <a href=
+     *      "https://docs.github.com/en/rest/billing/usage?apiVersion=2022-11-28#get-billing-usage-report-for-an-organization">documentation</a>
+     */
+    public GHBillingUsageReport getBillingUsage(int year, int month, int day) throws IOException {
+        return root().createRequest()
+                .withUrlPath("/organizations/" + login + "/settings/billing/usage")
+                .with("year", year)
+                .with("month", month)
+                .with("day", day)
+                .fetch(GHBillingUsageReport.class);
+    }
+
+    /**
+     * Gets the Copilot seat information and settings of this organization. Only organization owners can call it.
+     *
+     * @return the Copilot billing
+     * @throws IOException
+     *             the io exception
+     * @see <a href=
+     *      "https://docs.github.com/en/rest/copilot/copilot-user-management?apiVersion=2022-11-28#get-copilot-seat-information-and-settings-for-an-organization">documentation</a>
+     */
+    public GHCopilotBilling getCopilotBilling() throws IOException {
+        return root().createRequest().withUrlPath("/orgs/" + login + "/copilot/billing").fetch(GHCopilotBilling.class);
+    }
+
+    /**
      * Gets a single external group by ID.
      *
      * @param groupId
@@ -462,6 +520,18 @@ public class GHOrganization extends GHPerson {
         } catch (IOException ignore) {
             return false;
         }
+    }
+
+    /**
+     * Lists the Copilot seats currently assigned in this organization. Only organization owners can call it.
+     *
+     * @return the paged iterable
+     * @see <a href=
+     *      "https://docs.github.com/en/rest/copilot/copilot-user-management?apiVersion=2022-11-28#list-all-copilot-seat-assignments-for-an-organization">documentation</a>
+     */
+    public PagedIterable<GHCopilotSeat> listCopilotSeats() {
+        return new GHCopilotSeatsIterable(this,
+                root().createRequest().withUrlPath("/orgs/" + login + "/copilot/billing/seats"));
     }
 
     /**
