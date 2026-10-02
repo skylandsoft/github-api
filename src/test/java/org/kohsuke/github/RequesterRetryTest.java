@@ -1,5 +1,6 @@
 package org.kohsuke.github;
 
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,8 @@ import org.kohsuke.github.extras.HttpClientGitHubConnector;
 import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 
 import java.io.*;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +27,13 @@ import java.util.logging.StreamHandler;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.net.ssl.SSLHandshakeException;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.hamcrest.Matchers.*;
 
 // TODO: Auto-generated Javadoc
@@ -377,7 +386,8 @@ public class RequesterRetryTest extends AbstractGitHubWireMockTest {
      */
     @Test
     public void testInputStreamFailureExceptions() throws Exception {
-        // No retry for these Exceptions
+        // A GET whose success response body fails to read is retried; the connector throws on the first two of every
+        // three requests, so the third attempt succeeds and each attempt reaches the server.
         GitHubConnector connector = new BodyStreamThrowingGitHubConnector<>(() -> {
             throw new IOException("Custom");
         });
@@ -387,19 +397,12 @@ public class RequesterRetryTest extends AbstractGitHubWireMockTest {
 
         resetTestCapturedLog();
         baseRequestCount = this.mockGitHub.getRequestCount();
-        try {
-            this.gitHub.getOrganization(GITHUB_API_TEST_ORG);
-            fail();
-        } catch (Exception e) {
-            assertThat(e, instanceOf(HttpException.class));
-            assertThat(e.getCause(), instanceOf(IOException.class));
-            assertThat(e.getCause().getMessage(), is("Custom"));
-            String capturedLog = getTestCapturedLog();
-            assertThat(capturedLog, not(containsString("retries remaining")));
-            assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 1));
-        }
+        assertThat(this.gitHub.getOrganization(GITHUB_API_TEST_ORG), is(notNullValue()));
+        assertThat(getTestCapturedLog(), containsString("(2 retries remaining)"));
+        assertThat(getTestCapturedLog(), containsString("(1 retries remaining)"));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 3));
 
-        // FileNotFound doesn't need a special connector
+        // 404 is never retried. FileNotFound doesn't need a special connector
         this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl()).build();
 
         resetTestCapturedLog();
@@ -439,7 +442,8 @@ public class RequesterRetryTest extends AbstractGitHubWireMockTest {
      */
     @Test
     public void testResponseCodeFailureExceptions() throws Exception {
-        // No retry for these Exceptions
+        // A GET that fails before any response arrives is retried. The connector throws before calling the server on
+        // the first two of every three requests, so only the successful third attempt reaches the server.
         GitHubConnector connector = new SendThrowingGitHubConnector<>(() -> {
             throw new IOException("Custom");
         });
@@ -449,23 +453,124 @@ public class RequesterRetryTest extends AbstractGitHubWireMockTest {
 
         resetTestCapturedLog();
         baseRequestCount = this.mockGitHub.getRequestCount();
+        assertThat(this.gitHub.getOrganization(GITHUB_API_TEST_ORG), is(notNullValue()));
+        String capturedLog = getTestCapturedLog();
+        assertThat(capturedLog, containsString("(2 retries remaining)"));
+        assertThat(capturedLog, containsString("(1 retries remaining)"));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 1));
+
+        // A read timeout is retried like any other transient failure
+        this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl())
+                .withConnector(new SendThrowingGitHubConnector<>(() -> {
+                    throw new SocketTimeoutException("Custom");
+                }))
+                .build();
+        resetTestCapturedLog();
+        baseRequestCount = this.mockGitHub.getRequestCount();
+        assertThat(this.gitHub.getOrganization(GITHUB_API_TEST_ORG), is(notNullValue()));
+        assertThat(getTestCapturedLog(), containsString("(2 retries remaining)"));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 1));
+
+        // Permanent failures fail fast on the first attempt
+        assertFailsWithoutRetry(() -> {
+            throw new UnknownHostException("Custom");
+        }, UnknownHostException.class);
+        assertFailsWithoutRetry(() -> {
+            throw new SSLHandshakeException("Custom");
+        }, SSLHandshakeException.class);
+        assertFailsWithoutRetry(() -> {
+            throw new InterruptedIOException("Custom");
+        }, InterruptedIOException.class);
+    }
+
+    /**
+     * A GET answered with a server error on every attempt fails after the retries are used up.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testServerErrorOnEveryGetAttemptFails() throws Exception {
+        this.mockGitHub.apiServer()
+                .stubFor(get(urlEqualTo("/orgs/" + GITHUB_API_TEST_ORG)).willReturn(aResponse().withStatus(503)));
+
+        this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl()).build();
+
+        resetTestCapturedLog();
+        baseRequestCount = this.mockGitHub.getRequestCount();
         try {
             this.gitHub.getOrganization(GITHUB_API_TEST_ORG);
             fail();
-        } catch (Exception e) {
-            assertThat(e, instanceOf(HttpException.class));
-            assertThat(e.getCause(), instanceOf(IOException.class));
-            assertThat(e.getCause().getMessage(), is("Custom"));
-            String capturedLog = getTestCapturedLog();
-            assertThat(capturedLog, not(containsString("retries remaining")));
-            assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount));
+        } catch (HttpException e) {
+            assertThat(e.getResponseCode(), equalTo(503));
         }
+        String capturedLog = getTestCapturedLog();
+        assertThat(capturedLog, containsString("(2 retries remaining)"));
+        assertThat(capturedLog, containsString("(1 retries remaining)"));
+        assertThat(capturedLog, not(containsString("(0 retries remaining)")));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 3));
+    }
 
-        connector = new SendThrowingGitHubConnector<>(() -> {
-            throw new FileNotFoundException("Custom");
-        });
+    /**
+     * A GET answered with a server error is retried and succeeds once the server recovers.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testServerErrorOnGetIsRetried() throws Exception {
+        String orgUrl = "/orgs/" + GITHUB_API_TEST_ORG;
+        this.mockGitHub.apiServer()
+                .stubFor(get(urlEqualTo(orgUrl)).inScenario("Retry")
+                        .whenScenarioStateIs(Scenario.STARTED)
+                        .willReturn(aResponse().withStatus(502))
+                        .willSetStateTo("Recovered"));
+        this.mockGitHub.apiServer()
+                .stubFor(get(urlEqualTo(orgUrl)).inScenario("Retry")
+                        .whenScenarioStateIs("Recovered")
+                        .willReturn(okJson("{\"login\":\"" + GITHUB_API_TEST_ORG + "\",\"id\":7544739}")));
+
+        this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl()).build();
+
+        resetTestCapturedLog();
+        baseRequestCount = this.mockGitHub.getRequestCount();
+        assertThat(this.gitHub.getOrganization(GITHUB_API_TEST_ORG).getLogin(), equalTo(GITHUB_API_TEST_ORG));
+        String capturedLog = getTestCapturedLog();
+        assertThat(capturedLog, containsString("(2 retries remaining)"));
+        assertThat(capturedLog, not(containsString("(1 retries remaining)")));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 2));
+    }
+
+    /**
+     * A write answered with a server error is never retried.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testServerErrorOnPostIsNotRetried() throws Exception {
+        String reposUrl = "/orgs/" + GITHUB_API_TEST_ORG + "/repos";
+        this.mockGitHub.apiServer().stubFor(post(urlEqualTo(reposUrl)).willReturn(aResponse().withStatus(502)));
+
+        this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl()).build();
+
+        resetTestCapturedLog();
+        baseRequestCount = this.mockGitHub.getRequestCount();
+        try {
+            this.gitHub.createRequest().method("POST").with("name", "retry-test").withUrlPath(reposUrl).send();
+            fail();
+        } catch (HttpException e) {
+            assertThat(e.getResponseCode(), equalTo(502));
+        }
+        String capturedLog = getTestCapturedLog();
+        assertThat(capturedLog, not(containsString("retries remaining")));
+        assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount + 1));
+    }
+
+    private void assertFailsWithoutRetry(Thrower<IOException> thrower, Class<? extends IOException> causeType)
+            throws IOException {
         this.gitHub = getGitHubBuilder().withEndpoint(mockGitHub.apiServer().baseUrl())
-                .withConnector(connector)
+                .withConnector(new SendThrowingGitHubConnector<>(thrower))
                 .build();
 
         resetTestCapturedLog();
@@ -474,8 +579,9 @@ public class RequesterRetryTest extends AbstractGitHubWireMockTest {
             this.gitHub.getOrganization(GITHUB_API_TEST_ORG);
             fail();
         } catch (Exception e) {
-            assertThat(e, instanceOf(FileNotFoundException.class));
-            assertThat(e.getMessage(), is("Custom"));
+            assertThat(e, instanceOf(HttpException.class));
+            assertThat(e.getCause(), instanceOf(causeType));
+            assertThat(e.getCause().getMessage(), is("Custom"));
             String capturedLog = getTestCapturedLog();
             assertThat(capturedLog, not(containsString("retries remaining")));
             assertThat(this.mockGitHub.getRequestCount(), equalTo(baseRequestCount));
