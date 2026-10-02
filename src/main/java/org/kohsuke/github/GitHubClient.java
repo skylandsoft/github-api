@@ -24,11 +24,13 @@ import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.net.ssl.SSLHandshakeException;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 import static java.net.HttpURLConnection.HTTP_ACCEPTED;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
@@ -106,9 +108,9 @@ class GitHubClient {
     private static final int DEFAULT_CONNECTION_ERROR_RETRIES = 2;
 
     /** The Constant DEFAULT_MAXIMUM_RETRY_TIMEOUT_MILLIS. */
-    private static final int DEFAULT_MAXIMUM_RETRY_MILLIS = 100;
+    private static final int DEFAULT_MAXIMUM_RETRY_MILLIS = 3000;
     /** The Constant DEFAULT_MINIMUM_RETRY_TIMEOUT_MILLIS. */
-    private static final int DEFAULT_MINIMUM_RETRY_MILLIS = DEFAULT_MAXIMUM_RETRY_MILLIS;
+    private static final int DEFAULT_MINIMUM_RETRY_MILLIS = 1000;
     private static final Logger LOGGER = Logger.getLogger(GitHubClient.class.getName());
     private static final ObjectMapper MAPPER = JsonMapper.builder()
             .addModule(new JavaTimeModule())
@@ -219,6 +221,32 @@ class GitHubClient {
     private static boolean isRedirecting(int statusCode) {
         return statusCode == HTTP_MOVED_PERM || statusCode == HTTP_MOVED_TEMP || statusCode == 303 || statusCode == 307
                 || statusCode == 308;
+    }
+
+    /**
+     * Decides whether a request that failed with {@code e} may be sent again.
+     * <p>
+     * A read is retried when the connection failed before any response arrived, when the server answered 5xx, or when a
+     * success response could not be read or parsed (a truncated or reset body). 4xx responses and permanent failures
+     * such as an unknown or untrusted host are never retried.
+     */
+    private static boolean isRetryableReadFailure(IOException e,
+            @Nonnull GitHubConnectorRequest connectorRequest,
+            @CheckForNull GitHubConnectorResponse connectorResponse) {
+        // Writes are never retried: a 5xx on a POST does not prove the write did not happen.
+        if (!"GET".equals(connectorRequest.method())) {
+            return false;
+        }
+        // SocketTimeoutException extends InterruptedIOException but is a timeout, not a thread interruption.
+        boolean interrupted = e instanceof InterruptedIOException && !(e instanceof SocketTimeoutException);
+        if (interrupted || e instanceof UnknownHostException || e instanceof SSLHandshakeException) {
+            return false;
+        }
+        if (connectorResponse == null) {
+            return true;
+        }
+        int statusCode = connectorResponse.statusCode();
+        return statusCode >= HTTP_INTERNAL_ERROR || statusCode < HTTP_BAD_REQUEST;
     }
 
     private static void logRetryConnectionError(IOException e, URL url, int retries) throws IOException {
@@ -659,6 +687,10 @@ class GitHubClient {
                     connectorRequest = e.connectorRequest;
                 }
             } catch (IOException e) {
+                if (retries > 0 && isRetryableReadFailure(e, connectorRequest, connectorResponse)) {
+                    logRetryConnectionError(e, request.url(), retries);
+                    continue;
+                }
                 throw interpretApiError(e, connectorRequest, connectorResponse);
             } finally {
                 IOUtils.closeQuietly(connectorResponse);
