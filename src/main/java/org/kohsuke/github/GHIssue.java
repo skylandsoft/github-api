@@ -146,6 +146,9 @@ public class GHIssue extends GHObject implements Reactable {
     /** The number. */
     protected int number;
 
+    /** The parent issue url. */
+    protected String parentIssueUrl;
+
     /** The pull request. */
     protected GHIssue.PullRequest pullRequest;
 
@@ -459,6 +462,31 @@ public class GHIssue extends GHObject implements Reactable {
      */
     public int getNumber() {
         return number;
+    }
+
+    /**
+     * Gets the parent issue of this sub-issue.
+     *
+     * @return the parent issue, or null if this issue is not a sub-issue
+     * @throws IOException
+     *             the io exception
+     */
+    public GHIssue getParentIssue() throws IOException {
+        if (parentIssueUrl == null) {
+            return null;
+        }
+        // Not wrapped with this issue's repository: the parent can belong to another repository of the same owner,
+        // so its api route resolves from its own url.
+        return root().createRequest().setRawUrlPath(parentIssueUrl).fetch(GHIssue.class);
+    }
+
+    /**
+     * Gets the parent issue url.
+     *
+     * @return the parent issue url, or null if this issue is not a sub-issue
+     */
+    public URL getParentIssueUrl() {
+        return GitHubClient.parseURL(parentIssueUrl);
     }
 
     /**
