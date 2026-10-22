@@ -17,3 +17,4 @@ public enum GHDirection {
 }
 // commit 2: 5 commitlik PR testi icin eklendi
 // commit 3: 5 commitlik PR testi icin eklendi
+// commit 4: 5 commitlik PR testi icin eklendi
