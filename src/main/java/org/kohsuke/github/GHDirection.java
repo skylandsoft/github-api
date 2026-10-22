@@ -6,6 +6,8 @@ package org.kohsuke.github;
  *
  * @author Kohsuke Kawaguchi
  */
+// Fork PR checkout testi (QRVW): bu yorum satiri yalnizca fork'ta eklendi,
+// skylandsoft/github-api base reposunda YOKTUR.
 public enum GHDirection {
 
     /** The asc. */
